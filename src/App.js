@@ -1,24 +1,33 @@
-import logo from './logo.svg';
-import './App.css';
+import { Routes, Route } from 'react-router-dom'
+import Layout from './views/Layout'
+import Home from './views/Home'
+import RTC from './views/RTC'
+import { createContext, useEffect } from 'react'
+import axios from './api'
+import createSocket from './socket'
+const socket = createSocket()
+export const SocketContext = createContext()
+
+function Router(){
+
+  return(
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={<Home />} />
+        <Route path="room/:name" element={<RTC />} />
+      </Route>
+    </Routes>
+  )
+}
 
 function App() {
+  useEffect(() => {
+    axios.get('/').then(res => console.log('서버 연결 ', res.data)).catch(err => console.log(err))
+  }, [])
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <SocketContext.Provider value={socket}>
+      <Router />
+    </SocketContext.Provider>
   );
 }
 
