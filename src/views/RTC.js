@@ -1,4 +1,4 @@
-import { useRef, useContext, useEffect } from "react"
+import { useRef, useEffect } from "react"
 import { useLocation, useNavigate, useParams } from "react-router-dom"
 import StyledContent from '../styled/content'
 import { socket } from '../App'
