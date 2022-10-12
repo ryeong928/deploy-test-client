@@ -48,26 +48,26 @@ export default function RTC(){
       PC.addEventListener("datachannel", (e) => {
         console.log("data channel received: ", e)
         DC = e.channel
-        DC.send("i received your data channel")
+        DC.send("i received your data channel received")
         DC.addEventListener("message", (e) => {
           console.log('data channel: ', e.data)
         })
       })
       // connect the other
-      socket.on("answer", (answer) => {
-        console.log("answer received: ", answer)
-        socket.on("ice", (ice) => {
-          console.log("ice received: ", ice)
-          PC.addIceCandidate(ice)
-        })
-        PC.setRemoteDescription(answer)
-      })
       console.log("offer received: ", offer)
       PC.setRemoteDescription(offer)
       const answer = await PC.createAnswer()
       PC.setLocalDescription(answer)
       console.log("answer sent: ", answer)
       socket.emit("answer", answer)
+    })
+    socket.on("answer", (answer) => {
+      console.log("answer received: ", answer)
+      PC.setRemoteDescription(answer)
+    })
+    socket.on("ice", (ice) => {
+      console.log("ice received: ", ice)
+      PC.addIceCandidate(ice)
     })
     async function getCameras(){
       try{
