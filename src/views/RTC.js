@@ -17,7 +17,7 @@ export default function RTC(){
     }
     socket.emit("join", name)
     return () => socket.emit("leave")
-  }, [])
+  }, [name, navigate, props, socket])
 
   return(
     <StyledContent.RTC>

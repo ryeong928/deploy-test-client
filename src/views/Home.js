@@ -1,13 +1,11 @@
-import { useContext, useRef, useState } from "react"
+import { useRef } from "react"
 import { useNavigate } from "react-router-dom"
-import { SocketContext } from "../App"
 import StyledContent from '../styled/content'
 
 export default function Home(){
   const navigate = useNavigate()
-  const socket = useContext(SocketContext)
   const rommNameRef = useRef(null)
-  const [rooms, setRooms] = useState([])
+  const rooms = []
 
   function enterRoom(){
     navigate(`room/${rommNameRef.current.value}`, {state: rommNameRef.current.value})
