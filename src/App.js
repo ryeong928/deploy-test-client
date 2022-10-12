@@ -5,11 +5,10 @@ import RTC from './views/RTC'
 import { createContext, useEffect } from 'react'
 import axios from './api'
 import createSocket from './socket'
-const socket = createSocket()
+export const socket = createSocket()
 export const SocketContext = createContext()
 
 function Router(){
-
   return(
     <Routes>
       <Route path="/" element={<Layout />}>
