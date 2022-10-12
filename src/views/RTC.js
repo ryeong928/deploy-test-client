@@ -20,7 +20,7 @@ export default function RTC(){
   const localRef = useRef(null)
   const remoteRef = useRef(null)
   const [cameras, setCameras] = useState([])
-
+  console.log('cameras: ', cameras)
   useEffect(() => {
     if(props !== name) {
       window.alert("권한이 없습니다")
