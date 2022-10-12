@@ -5,12 +5,7 @@ import { socket } from '../App'
 
 let mediaStream
 let DC // datachannel(peer-to-peer 데이터 전송)은 offer를 생성하기 전에 만들어야 한다
-let PC = new RTCPeerConnection({iceServers: [{urls: [
-  "stun:stun.l.google.com:19302",
-  "stun:stun2.l.google.com:19302",
-  "stun:stun3.l.google.com:19302",
-  "stun:stun4.l.google.com:19302",
-]}]})
+let PC
 
 
 export default function RTC(){
@@ -26,16 +21,25 @@ export default function RTC(){
       window.alert("권한이 없습니다")
       return navigate('/', {replace: true})
     }
-    // answer로 방장이 sdp를 설정하면, icecandidate 이벤트가 발생
-    PC.addEventListener("icecandidate", (d) => {
-      console.log("ice sent: ", d)
-      socket.emit("ice", d.candidate)
-    })
-    // ice candidate를 등록하고 나면 발생하는 addstream 이벤트
-    PC.addEventListener("addstream", (d) => {
-      console.log("add remote stream")
-      remoteRef.current.srcObject = d.stream
-    })
+    function connect(){
+      PC = new RTCPeerConnection({iceServers: [{urls: [
+        "stun:stun.l.google.com:19302",
+        "stun:stun2.l.google.com:19302",
+        "stun:stun3.l.google.com:19302",
+        "stun:stun4.l.google.com:19302",
+      ]}]})
+      // answer로 방장이 sdp를 설정하면, icecandidate 이벤트가 발생
+      PC.addEventListener("icecandidate", (d) => {
+        console.log("ice sent: ", d)
+        socket.emit("ice", d.candidate)
+      })
+      // ice candidate를 등록하고 나면 발생하는 addstream 이벤트
+      PC.addEventListener("addstream", (d) => {
+        console.log("add remote stream: ", d)
+        remoteRef.current.srcObject = d.stream
+      })
+      mediaStream.getTracks().forEach(t => PC.addTrack(t, mediaStream))
+    }
     socket.on("join", async () => {
       console.log("the other joined!")
       // data channel 생성
@@ -92,7 +96,7 @@ export default function RTC(){
         mediaStream = await window.navigator.mediaDevices.getUserMedia(initialConstraints)
         localRef.current.srcObject = mediaStream
         // add track
-        mediaStream.getTracks().forEach(t => PC.addTrack(t, mediaStream))
+        connect()
         //
         socket.emit("join", name)
       }catch(err){
