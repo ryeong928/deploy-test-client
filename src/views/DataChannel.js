@@ -11,7 +11,6 @@ let PC = new RTCPeerConnection({iceServers: [{urls: [
   "stun:stun3.l.google.com:19302",
   "stun:stun4.l.google.com:19302",
 ]}]})
-let start = true
 PC.addEventListener("icecandidate", (e) => {
   console.log('icecandidate send')
   socket.emit("ice", e.candidate)
@@ -58,7 +57,6 @@ export default function DataChannel(){
       DC.addEventListener("message", (e) => {
         console.log('DC message: ', e.data)
       })
-      start = false
       const offer = await PC.createOffer()
       PC.setLocalDescription(offer)
       console.log("offer send")
@@ -81,7 +79,6 @@ export default function DataChannel(){
       socket.emit("answer", answer)
     })
     socket.on("answer", (answer) => {
-      start = true
       console.log('answer get')
       PC.setRemoteDescription(answer)
     })
