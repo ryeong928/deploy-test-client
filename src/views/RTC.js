@@ -76,6 +76,7 @@ export default function RTC(){
       DC = PC.createDataChannel("dc")
       DC.addEventListener("open", (e) => {
         console.log("DC open: ", e)
+        DC.send("DC host connected")
       })
       DC.addEventListener("message", (e) => {
         console.log('DC message: ', e.data)
@@ -90,7 +91,7 @@ export default function RTC(){
       PC.addEventListener("datachannel", (e) => {
         console.log("DC open: ", e)
         DC = e.channel
-        DC.send("DC connected")
+        DC.send("DC guest connected")
         DC.addEventListener("message", (e) => {
           console.log('DC message: ', e.data)
         })
@@ -124,7 +125,7 @@ export default function RTC(){
 
   return(
     <StyledContent.RTC>
-      <header>DataChannel room {name}</header>
+      <header>RTC room {name}</header>
       <main>
         <video ref={localRef} autoPlay />
         <video ref={remoteRef} autoPlay />
