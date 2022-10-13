@@ -31,19 +31,18 @@ export default function DataChannel(){
   const remoteRef = useRef(null)
 
   const setLocalVideo = useCallback(async () => {
-    const constraints = {audio: true, video: true}
-    mediaStream = await window.navigator.mediaDevices.getUserMedia(constraints)
-    localRef.current.srcObject = mediaStream
-    mediaStream.getTracks().forEach(t => PC.addTrack(t, mediaStream))
   }, [])
   const init = useCallback(async () => {
     try{
-      await setLocalVideo()
+      const constraints = {audio: true, video: true}
+      mediaStream = await window.navigator.mediaDevices.getUserMedia(constraints)
+      localRef.current.srcObject = mediaStream
+      mediaStream.getTracks().forEach(t => PC.addTrack(t, mediaStream))
       socket.emit("join", name)
     }catch(err){
       console.log(err)
     }
-  }, [])
+  }, [name])
 
   useEffect(() => {
     if(props !== name) {
@@ -97,7 +96,7 @@ export default function DataChannel(){
       console.log('data channel unmounted')
       socket.disconnect()
     }
-  }, [name, props])
+  }, [name, props, init, navigate])
 
 
 
