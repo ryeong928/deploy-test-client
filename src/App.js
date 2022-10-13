@@ -6,7 +6,6 @@ import { createContext, useEffect } from 'react'
 import axios from './api'
 import createSocket from './socket'
 import DataChannel from './views/DataChannel'
-import PeerJS from './views/PeerJS'
 export const socket = createSocket()
 export const SocketContext = createContext()
 
@@ -17,7 +16,6 @@ function Router(){
         <Route index element={<Home />} />
         <Route path="room/:name" element={<RTC />} />
         <Route path="datachannel/:name" element={<DataChannel />} />
-        <Route path="peerjs/:name" element={<PeerJS />} />
       </Route>
     </Routes>
   )

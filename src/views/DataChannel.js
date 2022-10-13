@@ -27,6 +27,13 @@ let PC = new RTCPeerConnection({
     },
   ],
 });
+/*
+free STUN, TURN server : https://www.metered.ca/tools/openrelay/
+
+The Open Relay runs on port 80 and 443 to bypass corporate firewalls, 
+many corporate/enterprise firewall only allow port 80 or 443, 
+it also supports turns + SSL for maximum compatibility.
+*/
 PC.addEventListener("icecandidate", (e) => {
   console.log('icecandidate send')
   socket.emit("ice", e.candidate)
