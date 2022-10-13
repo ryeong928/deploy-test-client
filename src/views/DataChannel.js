@@ -36,7 +36,7 @@ export default function DataChannel(){
       localRef.current.srcObject = mediaStream
       PC.addEventListener("addstream", (e) => {
         console.log("addstream happened")
-        remoteRef.current.srcObject = d.stream
+        remoteRef.current.srcObject = e.stream
       })
       mediaStream.getTracks().forEach(t => PC.addTrack(t, mediaStream))
       socket.emit("join", name)
