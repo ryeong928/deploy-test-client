@@ -30,8 +30,6 @@ export default function DataChannel(){
   const localRef = useRef(null)
   const remoteRef = useRef(null)
 
-  const setLocalVideo = useCallback(async () => {
-  }, [])
   const init = useCallback(async () => {
     try{
       const constraints = {audio: true, video: true}
