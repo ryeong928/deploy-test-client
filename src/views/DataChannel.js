@@ -4,6 +4,7 @@ import StyledContent from "../styled/content";
 import { socket } from '../App'
 
 let mediaStream
+
 let PC = new RTCPeerConnection({iceServers: [{urls: [
   "stun:stun.l.google.com:19302",
   "stun:stun2.l.google.com:19302",
@@ -16,9 +17,7 @@ PC.addEventListener("icecandidate", (e) => {
   console.log('icecandidate send')
   socket.emit("ice", e.candidate)
 })
-PC.addEventListener("addstream", (e) => {
-  console.log("addstream happened")
-})
+
 let DC
 
 
@@ -35,6 +34,10 @@ export default function DataChannel(){
       const constraints = {audio: true, video: true}
       mediaStream = await window.navigator.mediaDevices.getUserMedia(constraints)
       localRef.current.srcObject = mediaStream
+      PC.addEventListener("addstream", (e) => {
+        console.log("addstream happened")
+        remoteRef.current.srcObject = d.stream
+      })
       mediaStream.getTracks().forEach(t => PC.addTrack(t, mediaStream))
       socket.emit("join", name)
     }catch(err){
