@@ -13,7 +13,6 @@ let PC = new RTCPeerConnection({iceServers: [{urls: [
 ]}]})
 let start = true
 PC.addEventListener("icecandidate", (e) => {
-  if(!start) return
   console.log('icecandidate send')
   socket.emit("ice", e.candidate)
 })
@@ -34,8 +33,8 @@ export default function DataChannel(){
       const constraints = {audio: true, video: true}
       mediaStream = await window.navigator.mediaDevices.getUserMedia(constraints)
       localRef.current.srcObject = mediaStream
-      PC.addEventListener("addstream", (e) => {
-        console.log("addstream happened")
+      PC.addEventListener("track", (e) => {
+        console.log("track happened", e)
         remoteRef.current.srcObject = e.stream
       })
       mediaStream.getTracks().forEach(t => PC.addTrack(t, mediaStream))
@@ -89,6 +88,7 @@ export default function DataChannel(){
     socket.on("ice", (icecandidate) => {
       console.log('icecandidate get')
       PC.addIceCandidate(icecandidate)
+      PC.addstream(stream)
     })
 
     init()
