@@ -55,8 +55,14 @@ const RTC = styled(Content)`
     align-items: center;
   }
 `
+const DataChannel = styled(Content)`
+  & > main{
+    
+  }
+`
 const StyledContent = {
   Home,
-  RTC
+  RTC,
+  DataChannel,
 }
 export default StyledContent

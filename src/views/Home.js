@@ -5,18 +5,25 @@ import StyledContent from '../styled/content'
 export default function Home(){
   const navigate = useNavigate()
   const rommNameRef = useRef(null)
+  const dcNameRef = useRef(null)
   const rooms = []
 
-  function enterRoom(){
-    navigate(`room/${rommNameRef.current.value}`, {state: rommNameRef.current.value})
+  function enterRoom(type){
+    if(type === "rtc") navigate(`room/${rommNameRef.current.value}`, {state: rommNameRef.current.value})
+    if(type === "dc") navigate(`datachannel/${dcNameRef.current.value}`, {state: dcNameRef.current.value})
+    
   }
   return(
     <StyledContent.Home>
       <header>Home</header>
       <ul>{rooms.map(r => <li key={r}>{r}</li>)}</ul>
       <section>
-        <input type="text" ref={rommNameRef} />
-        <button onClick={enterRoom}>enter</button>
+        <input type="text" ref={rommNameRef} placeholder="rtc room" />
+        <button onClick={()=>enterRoom("rtc")}>enter</button>
+      </section>
+      <section>
+        <input type="text" ref={dcNameRef} placeholder="datachannel room" />
+        <button onClick={()=>enterRoom("dc")}>enter</button>
       </section>
     </StyledContent.Home>
   )

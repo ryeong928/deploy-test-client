@@ -5,6 +5,7 @@ import RTC from './views/RTC'
 import { createContext, useEffect } from 'react'
 import axios from './api'
 import createSocket from './socket'
+import DataChannel from './views/DataChannel'
 export const socket = createSocket()
 export const SocketContext = createContext()
 
@@ -14,6 +15,7 @@ function Router(){
       <Route path="/" element={<Layout />}>
         <Route index element={<Home />} />
         <Route path="room/:name" element={<RTC />} />
+        <Route path="datachannel/:name" element={<DataChannel />} />
       </Route>
     </Routes>
   )
