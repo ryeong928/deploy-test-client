@@ -85,9 +85,9 @@ export default function RTC(){
         socket.emit("ice", d.candidate)
       })
       // ice candidate를 등록하고 나면 발생하는 addstream 이벤트
-      PC.addEventListener("addstream", (d) => {
+      PC.addEventListener("track", (d) => {
         console.log("add remote stream: ", d)
-        remoteRef.current.srcObject = d.stream
+        remoteRef.current.srcObject = d.streams[0]
       })
       // 상대방에게 보낼 나의 mediaStream
       mediaStream.getTracks().forEach(t => PC.addTrack(t, mediaStream))
