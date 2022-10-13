@@ -1,5 +1,6 @@
 import { Peer } from 'peerjs'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import StyledContent from '../styled/content'
 
 const LP = new Peer(String(process.env.pid), {
