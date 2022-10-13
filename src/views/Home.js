@@ -1,29 +1,30 @@
-import { useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import StyledContent from '../styled/content'
+import axios from "../api"
 
 export default function Home(){
   const navigate = useNavigate()
   const rommNameRef = useRef(null)
-  const dcNameRef = useRef(null)
-  const rooms = []
+  const [rooms, setRooms] = useState([])
 
-  function enterRoom(type){
-    if(type === "rtc") navigate(`room/${rommNameRef.current.value}`, {state: rommNameRef.current.value})
-    if(type === "dc") navigate(`datachannel/${dcNameRef.current.value}`, {state: dcNameRef.current.value})
-    
+  function enterRoom(){
+    navigate(`rtc/${rommNameRef.current.value}`, {state: rommNameRef.current.value})
   }
+  function getRooms(){
+    axios.get('/rooms').then(res => setRooms(res.data)).catch(err => console.log(err))
+  }
+  useEffect(() => {
+    axios.get('/rooms').then(res => setRooms(res.data)).catch(err => console.log(err))
+  }, [])
   return(
     <StyledContent.Home>
       <header>Home</header>
+      <button onClick={getRooms}>refresh</button>
       <ul>{rooms.map(r => <li key={r}>{r}</li>)}</ul>
       <section>
-        <input type="text" ref={rommNameRef} placeholder="rtc room" />
-        <button onClick={()=>enterRoom("rtc")}>enter</button>
-      </section>
-      <section>
-        <input type="text" ref={dcNameRef} placeholder="datachannel room" />
-        <button onClick={()=>enterRoom("dc")}>enter</button>
+        <input type="text" ref={rommNameRef} placeholder="room name" />
+        <button onClick={enterRoom}>enter</button>
       </section>
     </StyledContent.Home>
   )
