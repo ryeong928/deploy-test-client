@@ -88,7 +88,6 @@ export default function DataChannel(){
     socket.on("ice", (icecandidate) => {
       console.log('icecandidate get')
       PC.addIceCandidate(icecandidate)
-      PC.addstream(stream)
     })
 
     init()
