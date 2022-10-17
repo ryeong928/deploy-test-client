@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import StyledContent from "../styled/content";
-import { ws } from '../App'
+import { socket } from '../App'
 
 let mediaStream
 const iceServers = [
@@ -34,6 +34,9 @@ many corporate/enterprise firewall only allow port 80 or 443,
 it also supports turns + SSL for maximum compatibility.
 */
 
+let DC
+
+
 export default function RTC(){
   const navigate = useNavigate()
   const {name} = useParams()
@@ -44,29 +47,21 @@ export default function RTC(){
 
   const init = useCallback(async () => {
     try{
-      // 내 장비 연결
       const constraints = {video: true, audio: true}
       mediaStream = await window.navigator.mediaDevices.getUserMedia(constraints)
+      console.log(mediaStream)
       localRef.current.srcObject = mediaStream
-      // 연결 준비
       PC = new RTCPeerConnection({iceServers})
       PC.addEventListener("icecandidate", (e) => {
         console.log('icecandidate send')
-        ws.send(JSON.stringify({type: 'ice', data: e.candidate}))
+        socket.emit("ice", e.candidate)
       })
       PC.addEventListener("track", (e) => {
         console.log("remote track added")
         remoteRef.current.srcObject = e.streams[0]
       })
-      // 전송할 나의 스트림 등록
       mediaStream.getTracks().forEach(t => PC.addTrack(t, mediaStream))
-
-      function connectServer(){
-        if(ws.readyState === ws.OPEN) ws.send(JSON.stringify({type: 'join', data: name}))
-        else setTimeout(() => connectServer(), 1000)
-      }
-      connectServer()
-
+      socket.emit("join", name)
     }catch(err){
       console.log(err)
     }
@@ -77,45 +72,51 @@ export default function RTC(){
       window.alert("권한이 없습니다")
       return navigate('/', {replace: true})
     }
-
-    ws.onmessage = ((e) => {
-      const {type, data} = JSON.parse(e.data)
-      if(type === "join"){
-        console.log('the other joined')
-        PC.createOffer().then(offer => {
-          PC.setLocalDescription(offer)
-          console.log('offer send')
-          ws.send(JSON.stringify({type: "offer", data: offer}))
-        })
-      }
-      if(type === "full") {
-        window.alert("방이 꽉 찼습니다")
-        return navigate(-1)
-      }
-      // 시그널링
-      if(type === "offer"){
-        PC.setRemoteDescription(data)
-        PC.createAnswer().then(answer => {
-          PC.setLocalDescription(answer)
-          console.log("answer send")
-          ws.send(JSON.stringify({type: "answer", data: answer}))
-        })
-      }
-      if(type === "answer"){
-        console.log("get answer")
-        PC.setRemoteDescription(data)
-      }
-      if(type === "ice"){
-        console.log("get candidate")
-        PC.addIceCandidate(data)
-      }
-
+    socket.on("join", async () => {
+      console.log("the other joined!")
+      DC = PC.createDataChannel("dc")
+      DC.addEventListener("open", (e) => {
+        console.log("DC open: ", e)
+        DC.send("DC host connected")
+      })
+      DC.addEventListener("message", (e) => {
+        console.log('DC message: ', e.data)
+      })
+      const offer = await PC.createOffer()
+      PC.setLocalDescription(offer)
+      console.log("offer send")
+      socket.emit("offer", offer)
     })
+    socket.on("offer", async (offer) => {
+      console.log("offer get")
+      PC.addEventListener("datachannel", (e) => {
+        console.log("DC open: ", e)
+        DC = e.channel
+        DC.send("DC guest connected")
+        DC.addEventListener("message", (e) => {
+          console.log('DC message: ', e.data)
+        })
+      })
+      PC.setRemoteDescription(offer)
+      const answer = await PC.createAnswer()
+      PC.setLocalDescription(answer)
+      console.log("answer send")
+      socket.emit("answer", answer)
+    })
+    socket.on("answer", (answer) => {
+      console.log('answer get')
+      PC.setRemoteDescription(answer)
+    })
+    socket.on("ice", (icecandidate) => {
+      console.log('icecandidate get')
+      PC.addIceCandidate(icecandidate)
+    })
+
     init()
 
-
     return () => {
-      ws.send(JSON.stringify({type: 'leave', data: name}))
+      console.log('data channel unmounted')
+      socket.disconnect()
     }
   }, [name, props, init, navigate])
 
@@ -127,8 +128,8 @@ export default function RTC(){
     <StyledContent.RTC>
       <header>RTC room {name}</header>
       <main>
-        <video ref={localRef} autoPlay controls/>
-        <video ref={remoteRef} autoPlay controls/>
+        <video ref={localRef} autoPlay/>
+        <video ref={remoteRef} autoPlay />
       </main>
     </StyledContent.RTC>
   )

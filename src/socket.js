@@ -1,15 +1,24 @@
-import { io } from 'socket.io-client'
 
 export default function createSocket(){
-  let socket = io.connect(process.env.REACT_APP_SERVER_URL, {cors: {origin: '*'}})
-  //
-  socket.on("connect", () => console.log("★ 소켓 연결: ", socket.id))
-  socket.on("disconnect", () => {
-    console.log("★ 소켓 해제: ", socket.id)
-    window.location = "/"
-  })
-  socket.on("rejected", ({reason}) => window.alert(reason))
-  socket.on("error", (data) => console.log(data))
-  //
-  return socket
+  function connect(){
+    let ws = new WebSocket(process.env.REACT_APP_SOCKET_URL)
+
+    ws.onopen = (e) => {
+      console.log(`★ WSS 연결 ${e.target.url}`)
+    }
+    ws.onmessage = (e) => {
+      const {type, data} = JSON.parse(e.data)
+      console.log(`★ WSS 메시지, ${type}: ${data}`)
+    }
+    ws.onclose = (e) => {
+      console.log('★ WSS 종료: ', e)
+      setTimeout(() => connect(), 2000)
+    }
+    ws.onerror = (e) => {
+      console.log('★ WSS 에러: ', e)
+    }
+    return ws
+  }
+
+  return connect()
 }
