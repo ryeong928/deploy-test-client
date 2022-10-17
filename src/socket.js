@@ -5,6 +5,7 @@ export default function createSocket(){
 
     ws.onopen = (e) => {
       console.log(`★ WSS 연결 ${e.target.url}`)
+      window.alert(`★ WSS 연결 ${e.target.url}`)
     }
     ws.onmessage = (e) => {
       const {type, data} = JSON.parse(e.data)
