@@ -23,7 +23,6 @@ function App() {
   useEffect(() => {
     axios.get('/').then(res => console.log('HTTP 서버 연결 ', res.data)).catch(err => console.log(err))
 
-    return () => ws.close()
   }, [])
   return (
     <SocketContext.Provider value={ws}>

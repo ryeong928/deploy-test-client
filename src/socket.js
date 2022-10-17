@@ -1,6 +1,7 @@
 
 export default function createSocket(){
   function connect(){
+    console.log("★ WSS 연결 시도")
     let ws = new WebSocket(process.env.REACT_APP_SOCKET_URL)
 
     ws.onopen = (e) => {
@@ -13,7 +14,7 @@ export default function createSocket(){
     }
     ws.onclose = (e) => {
       console.log('★ WSS 종료: ', e)
-      setTimeout(() => connect(), 2000)
+      // setTimeout(() => connect(), 2000)
     }
     ws.onerror = (e) => {
       console.log('★ WSS 에러: ', e)
