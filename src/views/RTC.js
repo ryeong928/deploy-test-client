@@ -24,7 +24,6 @@ const iceServers = [
     credential: "openrelayproject",
   },
 ]
-
 let PC
 /*
 free STUN, TURN server : https://www.metered.ca/tools/openrelay/
@@ -33,6 +32,10 @@ The Open Relay runs on port 80 and 443 to bypass corporate firewalls,
 many corporate/enterprise firewall only allow port 80 or 443, 
 it also supports turns + SSL for maximum compatibility.
 */
+
+function wsSend(msg){
+  ws.send(JSON.stringify(msg))
+}
 
 export default function RTC(){
   const navigate = useNavigate()
@@ -52,7 +55,7 @@ export default function RTC(){
       PC = new RTCPeerConnection({iceServers})
       PC.addEventListener("icecandidate", (e) => {
         console.log('icecandidate send')
-        ws.send(JSON.stringify({type: 'ice', data: e.candidate}))
+        wsSend({type: 'ice', data: e.candidate})
       })
       PC.addEventListener("track", (e) => {
         console.log("remote track added")
@@ -62,7 +65,7 @@ export default function RTC(){
       mediaStream.getTracks().forEach(t => PC.addTrack(t, mediaStream))
 
       function connectServer(){
-        if(ws.readyState === ws.OPEN) ws.send(JSON.stringify({type: 'join', data: name}))
+        if(ws.readyState === ws.OPEN) wsSend({type: 'join', data: name})
         else setTimeout(() => connectServer(), 1000)
       }
       connectServer()
@@ -85,7 +88,7 @@ export default function RTC(){
         PC.createOffer().then(offer => {
           PC.setLocalDescription(offer)
           console.log('offer send')
-          ws.send(JSON.stringify({type: "offer", data: offer}))
+          wsSend({type: "offer", data: offer})
         })
       }
       if(type === "full") {
@@ -98,7 +101,7 @@ export default function RTC(){
         PC.createAnswer().then(answer => {
           PC.setLocalDescription(answer)
           console.log("answer send")
-          ws.send(JSON.stringify({type: "answer", data: answer}))
+          wsSend({type: "answer", data: answer})
         })
       }
       if(type === "answer"){
@@ -115,11 +118,12 @@ export default function RTC(){
 
 
     return () => {
-      ws.send(JSON.stringify({type: 'leave', data: name}))
+      wsSend({type: 'leave', data: name})
+      PC.close()
+      mediaStream = null
+      PC = null
     }
   }, [name, props, init, navigate])
-
-
 
 
 

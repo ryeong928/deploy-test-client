@@ -6,7 +6,6 @@ import axios from './api'
 import createSocket from './socket'
 import RTC from './views/RTC'
 export const ws = createSocket()
-export const SocketContext = createContext()
 
 function Router(){
   return(
@@ -23,11 +22,10 @@ function App() {
   useEffect(() => {
     axios.get('/').then(res => console.log('HTTP 서버 연결 ', res.data)).catch(err => console.log(err))
 
+    return () => ws.close()
   }, [])
   return (
-    <SocketContext.Provider value={ws}>
-      <Router />
-    </SocketContext.Provider>
+    <Router />
   );
 }
 

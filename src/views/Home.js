@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import StyledContent from '../styled/content'
 import axios from "../api"
@@ -17,31 +17,33 @@ export default function Home(){
   const rommNameRef = useRef(null)
   const [rooms, setRooms] = useState([])
 
-  useEffect(() => {
-    async function getMedia(deviceId){
-      const constraints = {
-        video: true,
-        audio: deviceId ? {deviceId: {exact: deviceId}} : true
-      }
-      try{
-        // 사용 가능한 입력 장치 리스트
-        window.navigator.mediaDevices.enumerateDevices()
-        .then(res => setVideos(res.filter(d => d.kind === "videoinput").map(d => ({deviceId: d.deviceId, label: d.label}))))
-        window.navigator.mediaDevices.enumerateDevices()
-        .then(res => setAudios(res.filter(d => d.kind === "audioinput").map(d => ({deviceId: d.deviceId, label: d.label}))))
-        // 카메라/오디오 입출력 연결
-        mediaStream = await window.navigator.mediaDevices.getUserMedia(constraints)
-        localRef.current.srcObject = mediaStream
-        console.log('mediaStream: ', mediaStream)
-        // 현재 사용중인 카메라/오디오
-        setCrtVideo(mediaStream.getVideoTracks()[0])
-        setCrtAudio(mediaStream.getAudioTracks()[0])
-      }catch(err){
-        console.log(err)
-      }
+  const getMedia = useCallback(async function (deviceId){
+    const constraints = {
+      video: deviceId ? {deviceId: {exact: deviceId}} : true,
+      audio: true
     }
-    getMedia()
+    console.log("getMedia selected deviceId: ", deviceId)
+    try{
+      // 사용 가능한 입력 장치 리스트
+      window.navigator.mediaDevices.enumerateDevices()
+      .then(res => setVideos(res.filter(d => d.kind === "videoinput").map(d => ({deviceId: d.deviceId, label: d.label}))))
+      window.navigator.mediaDevices.enumerateDevices()
+      .then(res => setAudios(res.filter(d => d.kind === "audioinput").map(d => ({deviceId: d.deviceId, label: d.label}))))
+      // 카메라/오디오 입출력 연결
+      mediaStream = await window.navigator.mediaDevices.getUserMedia(constraints)
+      localRef.current.srcObject = mediaStream
+      console.log('mediaStream: ', mediaStream)
+      // 현재 사용중인 카메라/오디오
+      setCrtVideo(mediaStream.getVideoTracks()[0])
+      setCrtAudio(mediaStream.getAudioTracks()[0])
+    }catch(err){
+      console.log(err)
+    }
   }, [])
+
+  useEffect(() => {
+    getMedia()
+  }, [getMedia])
   function enterRoom(){
     navigate(`rtc/${rommNameRef.current.value}`, {state: rommNameRef.current.value})
   }
@@ -52,8 +54,9 @@ export default function Home(){
     axios.get('/rooms').then(res => setRooms(res.data)).catch(err => console.log(err))
 
   }, [])
-  console.log('사용가능 장치: ', videos, audios)
-  console.log('사용중인 장치: ', [crtVideo.label, crtAudio.label])
+  console.log('사용가능 비디오 디바이스: ', videos)
+  console.log('사용가능 오디오 디바이스: ', audios)
+  console.log('사용중인 디바이스: ', [crtVideo.label, crtAudio.label])
 
   function changeVideo(e){
     setCrtVideo(videos.find(v => v.deviceId === e.target.value))
@@ -62,7 +65,8 @@ export default function Home(){
     setCrtAudio(audios.find(a => a.deviceId === e.target.value))
   }
   function onoffVideo(){
-    mediaStream.getVideoTracks().forEach(t => t.enabled = !t.enabled)
+    const mediaStreamTrack = mediaStream.getVideoTracks()
+    mediaStreamTrack.forEach(track => track.enabled = !track.enabled)
     setIsVideoOn(prev => !prev)
   }
   function onoffAudio(){
@@ -80,11 +84,11 @@ export default function Home(){
       </section>
       <video ref={localRef} autoPlay controls/>
       <section>
-        <select defaultValue={crtVideo.label} onChange={changeVideo}>
-          {videos.map(v => (<option key={v.deviceId} value={v.deviceId}>{v.label}</option>))}
+        <select onChange={changeVideo}>
+          {videos.map(v => (<option key={v.deviceId} value={v.deviceId} selected={v.label === crtVideo.label}>{v.label}</option>))}
         </select>
-        <select defaultValue={crtAudio.label} onChange={changeAudio}>
-          {audios.map(a => (<option key={a.deviceId} value={a.deviceId}>{a.label}</option>))}
+        <select onChange={changeAudio}>
+          {audios.map(a => (<option key={a.deviceId} value={a.deviceId} selected={a.label === crtAudio.label}>{a.label}</option>))}
         </select>
       </section>
       <section>
