@@ -162,9 +162,9 @@ export default function RTC(){
         const videoSender = RTCRtpSenders.find(s => s.track.kind === "video")
         videoSender.replaceTrack(videoTrack)
       }
-
     }catch(err){
-
+      console.log("video change error: ", err)
+      window.alert("video change error: ", err)
     }
   }
   function changeAudio(e){
