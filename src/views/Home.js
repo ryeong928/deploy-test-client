@@ -24,6 +24,7 @@ export default function Home(){
     }
     console.log("getMedia selected deviceId: ", deviceId)
     try{
+      mediaStream?.getTracks().map(t => t.stop())
       // 사용 가능한 입력 장치 리스트
       window.navigator.mediaDevices.enumerateDevices()
       .then(res => setVideos(res.filter(d => d.kind === "videoinput").map(d => ({deviceId: d.deviceId, label: d.label}))))
@@ -43,7 +44,7 @@ export default function Home(){
 
   useEffect(() => {
     getMedia()
-  }, [])
+  }, [getMedia])
   function enterRoom(){
     navigate(`rtc/${rommNameRef.current.value}`, {state: rommNameRef.current.value})
   }

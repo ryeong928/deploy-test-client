@@ -1,7 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import Layout from './views/Layout'
 import Home from './views/Home'
-import { createContext, useEffect } from 'react'
+import { useEffect } from 'react'
 import axios from './api'
 import createSocket from './socket'
 import RTC from './views/RTC'
