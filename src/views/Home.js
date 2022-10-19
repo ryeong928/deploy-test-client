@@ -43,7 +43,7 @@ export default function Home(){
 
   useEffect(() => {
     getMedia()
-  }, [getMedia])
+  }, [])
   function enterRoom(){
     navigate(`rtc/${rommNameRef.current.value}`, {state: rommNameRef.current.value})
   }
@@ -58,8 +58,9 @@ export default function Home(){
   console.log('사용가능 오디오 디바이스: ', audios)
   console.log('사용중인 디바이스: ', [crtVideo.label, crtAudio.label])
 
-  function changeVideo(e){
+  async function changeVideo(e){
     setCrtVideo(videos.find(v => v.deviceId === e.target.value))
+    await getMedia(e.target.value)
   }
   function changeAudio(e){
     setCrtAudio(audios.find(a => a.deviceId === e.target.value))
