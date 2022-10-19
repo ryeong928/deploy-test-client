@@ -147,21 +147,20 @@ export default function RTC(){
       audio: true
     }
     try{
-      // 새롭게 생성한 mediaStream
+      // 새로운 mediaStream 생성
       mediaStream = await window.navigator.mediaDevices.getUserMedia(constraints)
       localRef.current.srcObject = mediaStream
-      console.log('mediaStream: ', mediaStream)
+      console.log('new mediaStream: ', mediaStream)
       // 내 트랙 등록
       mediaStream.getTracks().forEach(t => PC.addTrack(t, mediaStream))
       // 현재 사용중인 카메라/오디오
-      setCrtVideo(mediaStream.getVideoTracks()[0])
-      setCrtAudio(mediaStream.getAudioTracks()[0])
-      if(PC){
-        const videoTrack = mediaStream.getVideoTracks()[0]
-        const RTCRtpSenders = PC.getSenders()
-        const videoSender = RTCRtpSenders.find(s => s.track.kind === "video")
-        videoSender.replaceTrack(videoTrack)
-      }
+      // setCrtVideo(mediaStream.getVideoTracks()[0])
+      // setCrtAudio(mediaStream.getAudioTracks()[0])
+      // 원격 변경
+      const videoTrack = mediaStream.getVideoTracks()[0]
+      const RTCRtpSenders = PC.getSenders()
+      const videoSender = RTCRtpSenders.find(s => s.track.kind === "video")
+      videoSender.replaceTrack(videoTrack)
     }catch(err){
       console.log("video change error: ", err)
       window.alert("video change error: ", err)
