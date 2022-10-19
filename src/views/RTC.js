@@ -52,6 +52,7 @@ export default function RTC(){
   const [isVideoOn, setIsVideoOn] = useState(true)
   const [isAudioOn, setIsAudioOn] = useState(true)
 
+  console.log('current device: ', [crtVideo, crtAudio])
   const init = useCallback(async () => {
     console.log('init')
     try{
@@ -139,9 +140,8 @@ export default function RTC(){
       }
     }
   }, [name, props, init, navigate])
-
+  console.log([videos, audios])
   async function changeVideo(e){
-    setCrtVideo(videos.find(a => a.deviceId === e.target.value))
     const deviceId = e.target.value
     const constraints = {
       video: {deviceId: {exact: deviceId}},
@@ -163,7 +163,7 @@ export default function RTC(){
     }
   }
   async function changeAudio(e){
-    setCrtAudio(audios.find(v => v.deviceId === e.target.value))
+    setCrtAudio(audios.find(a => a.deviceId === e.target.value))
     const deviceId = e.target.value
     const constraints = {
       video: true,
