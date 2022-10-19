@@ -24,7 +24,8 @@ export default function Home(){
     }
     console.log("getMedia selected deviceId: ", deviceId)
     try{
-      mediaStream?.getTracks().map(t => t.stop())
+      // 사용중이던 장치 사용 중지
+      mediaStream?.getTracks().forEach(t => t.stop())
       // 사용 가능한 입력 장치 리스트
       window.navigator.mediaDevices.enumerateDevices()
       .then(res => setVideos(res.filter(d => d.kind === "videoinput").map(d => ({deviceId: d.deviceId, label: d.label}))))
@@ -52,8 +53,7 @@ export default function Home(){
     axios.get('/rooms').then(res => setRooms(res.data)).catch(err => console.log(err))
   }
   useEffect(() => {
-    axios.get('/rooms').then(res => setRooms(res.data)).catch(err => console.log(err))
-
+    getRooms()
   }, [])
   console.log('사용가능 비디오 디바이스: ', videos)
   console.log('사용가능 오디오 디바이스: ', audios)
@@ -101,6 +101,7 @@ export default function Home(){
   )
 }
 /*
+
   window.navigator.mediaDevices
     .enumerateDevices() : 연결된 I/O devices의 MediaDeviceInfo 배열을 반환한다
     .getUserMedia() : 유저 허락을 받아 비디오/음성 device를 키고, 각 input device의 MediaStream을 반환한다
