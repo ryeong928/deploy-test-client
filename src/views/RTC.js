@@ -70,7 +70,7 @@ export default function RTC(){
       // 연결 준비
       PC = new RTCPeerConnection({iceServers})
       PC.addEventListener("icecandidate", (e) => {
-        console.log('icecandidate send')
+        console.log('send candidate')
         wsSend({type: 'ice', data: e.candidate})
       })
       PC.addEventListener("track", (e) => {
@@ -102,7 +102,7 @@ export default function RTC(){
         console.log('the other joined')
         PC.createOffer().then(offer => {
           PC.setLocalDescription(offer)
-          console.log('offer send')
+          console.log('send offer')
           wsSend({type: "offer", data: offer})
         })
       }
@@ -115,7 +115,7 @@ export default function RTC(){
         PC.setRemoteDescription(data)
         PC.createAnswer().then(answer => {
           PC.setLocalDescription(answer)
-          console.log("answer send")
+          console.log("send answer")
           wsSend({type: "answer", data: answer})
         })
       }
@@ -141,6 +141,7 @@ export default function RTC(){
   }, [name, props, init, navigate])
 
   async function changeVideo(e){
+    setCrtVideo(videos.find(a => a.deviceId === e.target.value))
     const deviceId = e.target.value
     const constraints = {
       video: {deviceId: {exact: deviceId}},
@@ -151,11 +152,6 @@ export default function RTC(){
       mediaStream = await window.navigator.mediaDevices.getUserMedia(constraints)
       localRef.current.srcObject = mediaStream
       console.log('new mediaStream: ', mediaStream)
-      // 내 트랙 등록
-      mediaStream.getTracks().forEach(t => PC.addTrack(t, mediaStream))
-      // 현재 사용중인 카메라/오디오
-      // setCrtVideo(mediaStream.getVideoTracks()[0])
-      // setCrtAudio(mediaStream.getAudioTracks()[0])
       // 원격 변경
       const videoTrack = mediaStream.getVideoTracks()[0]
       const RTCRtpSenders = PC.getSenders()
@@ -166,8 +162,27 @@ export default function RTC(){
       window.alert("video change error: ", err)
     }
   }
-  function changeAudio(e){
-    setCrtAudio(audios.find(a => a.deviceId === e.target.value))
+  async function changeAudio(e){
+    setCrtAudio(audios.find(v => v.deviceId === e.target.value))
+    const deviceId = e.target.value
+    const constraints = {
+      video: true,
+      audio: {deviceId: {exact: deviceId}}
+    }
+    try{
+      // 새로운 mediaStream 생성
+      mediaStream = await window.navigator.mediaDevices.getUserMedia(constraints)
+      localRef.current.srcObject = mediaStream
+      console.log('new mediaStream: ', mediaStream)
+      // 원격 변경
+      const audioTrack = mediaStream.getAudioTracks()[0]
+      const RTCRtpSenders = PC.getSenders()
+      const audioSender = RTCRtpSenders.find(s => s.track.kind === "audio")
+      audioSender.replaceTrack(audioTrack)
+    }catch(err){
+      console.log("audio change error: ", err)
+      window.alert("audio change error: ", err)
+    }
   }
   function onoffVideo(){
     const mediaStreamTrack = mediaStream.getVideoTracks()
