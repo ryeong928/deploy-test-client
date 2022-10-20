@@ -183,7 +183,7 @@ export default function RTC(){
         // 사용중이던 트랙 중지
         mediaStream.getVideoTracks().forEach(t => t.stop())
         // 새로운 mediaStream 생성 및 등록
-        const tempStream = await getMediaStream({videoId: e.target.value})
+        const tempStream = getMediaStream({videoId: e.target.value})
         localRef.current.srcObject = tempStream
         // 원격 변경
         // const videoTrack = mediaStream.getVideoTracks()[0]
