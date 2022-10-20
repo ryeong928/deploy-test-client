@@ -67,22 +67,14 @@ export default function Home(){
       console.log(err)
     }
   }, [])
+  
+  useEffect(() => {
+    getRooms()
+  }, [])
 
   useEffect(() => {
     getMedia()
   }, [getMedia])
-  function enterRoom(){
-    navigate(`rtc/${rommNameRef.current.value}`, {state: rommNameRef.current.value})
-  }
-  function getRooms(){
-    axios.get('/rooms').then(res => setRooms(res.data)).catch(err => console.log(err))
-  }
-  useEffect(() => {
-    getRooms()
-  }, [])
-  console.log('사용가능 비디오 디바이스: ', videos)
-  console.log('사용가능 오디오 디바이스: ', audios)
-  console.log('사용중인 디바이스: ', [crtVideo.label, crtAudio.label])
 
   async function changeVideo(e){
     setCrtVideo(videos.find(v => v.deviceId === e.target.value))
@@ -93,13 +85,18 @@ export default function Home(){
     await getMedia({A: e.target.value})
   }
   function onoffVideo(){
-    const mediaStreamTrack = mediaStream.getVideoTracks()
-    mediaStreamTrack.forEach(track => track.enabled = !track.enabled)
+    mediaStream.getVideoTracks().forEach(track => track.enabled = !track.enabled)
     setIsVideoOn(prev => !prev)
   }
   function onoffAudio(){
     mediaStream.getAudioTracks().forEach(t => t.enabled = !t.enabled)
     setIsAudioOn(prev => !prev)
+  }
+  function enterRoom(){
+    navigate(`rtc/${rommNameRef.current.value}`, {state: rommNameRef.current.value})
+  }
+  function getRooms(){
+    axios.get('/rooms').then(res => setRooms(res.data)).catch(err => console.log(err))
   }
   return(
     <StyledContent.Home>
