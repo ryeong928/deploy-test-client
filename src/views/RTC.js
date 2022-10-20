@@ -36,35 +36,66 @@ it also supports turns + SSL for maximum compatibility.
 function wsSend(msg){
   ws.send(JSON.stringify(msg))
 }
+// 현재 사용가능한 input devices 리스트를 반환한다
+async function getDevices(){
+  try{
+    const videos = []
+    const audios = []
+    const devices = await window.navigator.mediaDevices.enumerateDevices()
+    devices.forEach(d => {
+      if(d.kind === "videoinput") videos.push(d)
+      if(d.kind === "audioinput") audios.push(d)
+    })
+    return {videos, audios}
+  }catch(err){
+    console.log("getDevices err: ", err)
+    window.alert("getDevices err")
+  }
+}
+// 나의 mediaStream를 반환한다
+async function getMediaStream(deviceId){
+  try{
+    const {videoId, audioId} = deviceId
+    const constraints = {
+      video: videoId ? {deviceId: {exact: videoId}} : true, 
+      audio: audioId ? {deviceId: {exact: audioId}} : true}
+    return await window.navigator.mediaDevices.getUserMedia(constraints)
+  }catch(err){
+    console.log('getMediaStream err: ', err)
+  }
+}
 
 export default function RTC(){
   const navigate = useNavigate()
   const {name} = useParams()
   const props = useLocation().state
-  // video
+  // video rendering
   const localRef = useRef(null)
   const remoteRef = useRef(null)
-  // options
+  // devices
   const [videos, setVideos] = useState([])
   const [audios, setAudios] = useState([])
+  // current device in usage
   const [crtVideo, setCrtVideo] = useState('')
   const [crtAudio, setCrtAudio] = useState('')
+  // on/off 
   const [isVideoOn, setIsVideoOn] = useState(true)
   const [isAudioOn, setIsAudioOn] = useState(true)
 
-  console.log('current device: ', [crtVideo, crtAudio])
+  console.log('peer connection: ', PC)
   console.log('device list: ', [videos, audios])
+  console.log('current device: ', [crtVideo, crtAudio])
 
   const init = useCallback(async () => {
     console.log('init')
     try{
       // 사용 가능한 입력 장치 리스트
-      window.navigator.mediaDevices.enumerateDevices()
-      .then(res => setVideos(res.filter(d => d.kind === "videoinput")))
-      window.navigator.mediaDevices.enumerateDevices()
-      .then(res => setAudios(res.filter(d => d.kind === "audioinput")))
+      getDevices().then(res => {
+        setVideos(res.videos)
+        setAudios(res.audios)
+      })
       // 내 장비 연결
-      mediaStream = await window.navigator.mediaDevices.getUserMedia({video: true, audio: true})
+      mediaStream = await getMediaStream()
       localRef.current.srcObject = mediaStream
       console.log('mediaStream: ', mediaStream)
       // 현재 사용중인 카메라/오디오
@@ -145,20 +176,17 @@ export default function RTC(){
   }, [name, props, init, navigate])
 
   async function changeVideo(e){
-    const deviceId = e.target.value
-    const constraints = {
-      video: {deviceId: {exact: deviceId}},
-      audio: true
-    }
+    console.log("selected video deviceId: ", e.target.value)
     try{
-      // 새로운 mediaStream 생성
-      mediaStream = await window.navigator.mediaDevices.getUserMedia(constraints)
+      // 새로운 mediaStream 생성 및 등록
+      mediaStream = await getMediaStream({videoId: e.target.value})
       localRef.current.srcObject = mediaStream
       console.log('new mediaStream: ', mediaStream)
       // 원격 변경
       const videoTrack = mediaStream.getVideoTracks()[0]
-      const RTCRtpSenders = PC.getSenders()
-      const videoSender = RTCRtpSenders.find(s => s.track.kind === "video")
+      console.log('videoTrack: ', videoTrack)
+      const videoSender = PC.getSenders().find(s => s.track.kind === "video")
+      console.log('videoSender: ', videoSender)
       videoSender.replaceTrack(videoTrack)
     }catch(err){
       console.log("video change error: ", err)
@@ -166,30 +194,26 @@ export default function RTC(){
     }
   }
   async function changeAudio(e){
-    setCrtAudio(audios.find(a => a.deviceId === e.target.value))
-    const deviceId = e.target.value
-    const constraints = {
-      video: true,
-      audio: {deviceId: {exact: deviceId}}
-    }
+    console.log("selected audio deviceId: ", e.target.value)
     try{
-      // 새로운 mediaStream 생성
-      mediaStream = await window.navigator.mediaDevices.getUserMedia(constraints)
+      // 새로운 mediaStream 생성 및 등록
+      mediaStream = await getMediaStream({audio: e.target.value})
       localRef.current.srcObject = mediaStream
       console.log('new mediaStream: ', mediaStream)
       // 원격 변경
       const audioTrack = mediaStream.getAudioTracks()[0]
-      const RTCRtpSenders = PC.getSenders()
-      const audioSender = RTCRtpSenders.find(s => s.track.kind === "audio")
+      console.log('audioTrack: ', audioTrack)
+      const audioSender = PC.getSenders().find(s => s.track.kind === "audio")
+      console.log('audioSender: ', audioSender)
       audioSender.replaceTrack(audioTrack)
     }catch(err){
       console.log("audio change error: ", err)
       window.alert("audio change error: ", err)
     }
   }
+
   function onoffVideo(){
-    const mediaStreamTrack = mediaStream.getVideoTracks()
-    mediaStreamTrack.forEach(t => t.enabled = !t.enabled)
+    mediaStream.getVideoTracks().forEach(t => t.enabled = !t.enabled)
     setIsVideoOn(prev => !prev)
   }
   function onoffAudio(){
