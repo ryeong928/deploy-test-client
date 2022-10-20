@@ -86,6 +86,19 @@ export default function RTC(){
   console.log('device list: ', [videos, audios])
   console.log('current device: ', [crtVideo, crtAudio])
 
+  const connect = useCallback(() => {
+    PC = new RTCPeerConnection({iceServers})
+    PC.addEventListener("icecandidate", (e) => {
+      console.log('send candidate')
+      wsSend({type: 'ice', data: e.candidate})
+    })
+    PC.addEventListener("track", (e) => {
+      console.log("remote track added")
+      remoteRef.current.srcObject = e.streams[0]
+    })
+    mediaStream.getTracks().forEach(t => PC.addTrack(t, mediaStream))
+  }, [])
+
   const init = useCallback(async () => {
     console.log('init')
     try{
@@ -102,22 +115,9 @@ export default function RTC(){
       setCrtVideo(mediaStream.getVideoTracks()[0])
       setCrtAudio(mediaStream.getAudioTracks()[0])
       // 연결 준비
-      PC = new RTCPeerConnection({iceServers})
-      PC.addEventListener("icecandidate", (e) => {
-        console.log('send candidate')
-        wsSend({type: 'ice', data: e.candidate})
-      })
-      PC.addEventListener("track", (e) => {
-        console.log("remote track added")
-        remoteRef.current.srcObject = e.streams[0]
-      })
-      mediaStream.getTracks().forEach(t => PC.addTrack(t, mediaStream))
+      
       // 시그널링 시도
-      function connectServer(){
-        if(ws.readyState === ws.OPEN) wsSend({type: 'join', data: name})
-        else setTimeout(() => connectServer(), 1000)
-      }
-      connectServer()
+
 
     }catch(err){
       console.log(err)
@@ -135,7 +135,6 @@ export default function RTC(){
       if(type === "join"){
         console.log('the other joined')
         PC.createOffer().then(offer => {
-          console.log("offer: ", offer)
           PC.setLocalDescription(offer)
           console.log('send offer')
           wsSend({type: "offer", data: offer})
@@ -163,7 +162,10 @@ export default function RTC(){
         PC.addIceCandidate(data)
       }
     })
-    init()
+    Promise.resolve(true)
+    .then(res => init())
+    .then(() => connect())
+    .then(() => wsSend({type: 'join', data: name}))
 
     return () => {
       wsSend({type: 'leave', data: name})
@@ -173,20 +175,26 @@ export default function RTC(){
         mediaStream = null
       }
     }
-  }, [name, props, init, navigate])
+  }, [name, props, init, navigate, connect, wsSend])
 
   async function changeVideo(e){
     try{
-      // 사용중이던 트랙 중지
-      mediaStream.getVideoTracks().forEach(t => t.stop())
-      // 새로운 mediaStream 생성 및 등록
-      const tempStream = await getMediaStream({videoId: e.target.value})
-      localRef.current.srcObject = tempStream
-      // 원격 변경
-      // const videoTrack = mediaStream.getVideoTracks()[0]
-      // const videoSender = PC.getSenders().find(s => s.track.kind === "video")
-      // videoSender.replaceTrack(videoTrack)
-      PC.replaceTrack(mediaStream.getVideoTracks()[0], tempStream.getVideoTracks()[0], mediaStream)
+      if(true){
+        setCrtVideo(videos.find(v => v.deviceId === e.target.value))
+        mediaStream.getTracks().forEach(t => t.stop())
+
+      }else{
+        // 사용중이던 트랙 중지
+        mediaStream.getVideoTracks().forEach(t => t.stop())
+        // 새로운 mediaStream 생성 및 등록
+        const tempStream = await getMediaStream({videoId: e.target.value})
+        localRef.current.srcObject = tempStream
+        // 원격 변경
+        // const videoTrack = mediaStream.getVideoTracks()[0]
+        // const videoSender = PC.getSenders().find(s => s.track.kind === "video")
+        // videoSender.replaceTrack(videoTrack)
+        PC.replaceTrack(mediaStream.getVideoTracks()[0], tempStream.getVideoTracks()[0], mediaStream)
+      }
     }catch(err){
       console.log("video change error: ", err)
       window.alert("video change error: ", err)
