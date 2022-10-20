@@ -4,6 +4,36 @@ import StyledContent from '../styled/content'
 import axios from "../api"
 
 let mediaStream
+// 현재 사용가능한 input devices 리스트를 반환한다
+async function getDevices(){
+  try{
+    const videos = []
+    const audios = []
+    const devices = await window.navigator.mediaDevices.enumerateDevices()
+    devices.forEach(d => {
+      if(d.kind === "videoinput") videos.push(d)
+      if(d.kind === "audioinput") audios.push(d)
+    })
+    return {videos, audios}
+  }catch(err){
+    console.log("getDevices err: ", err)
+    window.alert("getDevices err")
+  }
+}
+// 나의 mediaStream를 반환한다
+if(false){
+  async function getMediaStream(deviceId = {}){
+    try{
+      const {videoId, audioId} = deviceId
+      const constraints = {
+        video: videoId ? {deviceId: {exact: videoId}} : true, 
+        audio: audioId ? {deviceId: {exact: audioId}} : true}
+      return await window.navigator.mediaDevices.getUserMedia(constraints)
+    }catch(err){
+      console.log('getMediaStream err: ', err)
+    }
+  }
+}
 
 export default function Home(){
   const localRef = useRef(null)
@@ -27,10 +57,11 @@ export default function Home(){
       // 사용중이던 장치 사용 중지
       mediaStream?.getTracks().forEach(t => t.stop())
       // 사용 가능한 입력 장치 리스트
-      window.navigator.mediaDevices.enumerateDevices()
-      .then(res => setVideos(res.filter(d => d.kind === "videoinput").map(d => ({deviceId: d.deviceId, label: d.label}))))
-      window.navigator.mediaDevices.enumerateDevices()
-      .then(res => setAudios(res.filter(d => d.kind === "audioinput").map(d => ({deviceId: d.deviceId, label: d.label}))))
+      // 사용 가능한 입력 장치 리스트
+      getDevices().then(res => {
+        setVideos(res.videos)
+        setAudios(res.audios)
+      })
       // 카메라/오디오 입출력 연결
       mediaStream = await window.navigator.mediaDevices.getUserMedia(constraints)
       localRef.current.srcObject = mediaStream
