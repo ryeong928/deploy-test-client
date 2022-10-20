@@ -119,7 +119,7 @@ export default function RTC(){
     }catch(err){
       console.log('getMedia error: ', err)
     }
-  }, [name])
+  }, [])
 
   useEffect(() => {
     if(props !== name) {
@@ -172,7 +172,7 @@ export default function RTC(){
         mediaStream = null
       }
     }
-  }, [name, props, getMedia, navigate, connect, wsSend])
+  }, [name, props, getMedia, navigate, connect])
 
   function changeVideo(e){
     try{
