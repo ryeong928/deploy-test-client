@@ -180,13 +180,13 @@ export default function RTC(){
       // 사용중이던 트랙 중지
       mediaStream.getVideoTracks().forEach(t => t.stop())
       // 새로운 mediaStream 생성 및 등록
-      mediaStream = await getMediaStream({videoId: e.target.value})
-      localRef.current.srcObject = mediaStream
-      mediaStream.getTracks().forEach(t => PC.addTrack(t, mediaStream))
+      const tempStream = await getMediaStream({videoId: e.target.value})
+      localRef.current.srcObject = tempStream
       // 원격 변경
-      const videoTrack = mediaStream.getVideoTracks()[0]
-      const videoSender = PC.getSenders().find(s => s.track.kind === "video")
-      videoSender.replaceTrack(videoTrack)
+      // const videoTrack = mediaStream.getVideoTracks()[0]
+      // const videoSender = PC.getSenders().find(s => s.track.kind === "video")
+      // videoSender.replaceTrack(videoTrack)
+      PC.replaceTrack(mediaStream.getVideoTracks()[0], tempStream.getVideoTracks()[0], mediaStream)
     }catch(err){
       console.log("video change error: ", err)
       window.alert("video change error: ", err)
