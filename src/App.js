@@ -4,7 +4,7 @@ import Home from './views/Home'
 import { useEffect } from 'react'
 import axios from './api'
 import createSocket from './socket'
-import RTC from './views/RTC copy'
+import RTC from './views/RTC'
 export const ws = createSocket()
 
 function Router(){
