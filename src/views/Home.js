@@ -47,7 +47,7 @@ export default function Home(){
   const rommNameRef = useRef(null)
   const [rooms, setRooms] = useState([])
 
-  const getMedia = useCallback(async function (deviceId){
+  const getMedia = useCallback(async function (deviceId = {}){
     console.log("getMedia : ", deviceId.V, deviceId.A)
     try{
       // 사용중이던 장치 사용 중지
