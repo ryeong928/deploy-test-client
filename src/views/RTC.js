@@ -82,7 +82,6 @@ export default function RTC(){
   const [isAudioOn, setIsAudioOn] = useState(true)
 
   const connect = useCallback(() => {
-    console.log("connect start")
     PC = new RTCPeerConnection({iceServers})
     PC.addEventListener("icecandidate", (e) => {
       console.log('send candidate')
@@ -93,7 +92,6 @@ export default function RTC(){
       remoteRef.current.srcObject = e.streams[0]
     })
     mediaStream.getTracks().forEach(t => PC.addTrack(t, mediaStream))
-    console.log("connect end")
   }, [])
 
   const stop = useCallback(() => {
@@ -109,7 +107,6 @@ export default function RTC(){
 
   const getMedia = useCallback(async function (deviceId = {}){
     try{
-      console.log("get media start")
       mediaStream?.getTracks().forEach(t => t.stop())
       getDevices().then(res => {
         setVideos(res.videos)
@@ -121,7 +118,6 @@ export default function RTC(){
 
       setCrtVideo(mediaStream.getVideoTracks()[0])
       setCrtAudio(mediaStream.getAudioTracks()[0])
-      console.log("get media end")
     }catch(err){
       console.log(err)
     }
@@ -168,10 +164,7 @@ export default function RTC(){
     Promise.resolve(true)
     .then(() => getMedia())
     .then(() => connect())
-    .then(() => {
-      console.log("send join")
-      wsSend({type: 'join', data: name})
-    })
+    .then(() => wsSend({type: 'join', data: name}))
 
     return () => {
       wsSend({type: 'leave', data: name})

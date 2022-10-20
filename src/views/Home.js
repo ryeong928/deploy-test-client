@@ -108,8 +108,9 @@ export default function Home(){
     mediaStream.getAudioTracks().forEach(t => t.enabled = !t.enabled)
     setIsAudioOn(prev => !prev)
   }
-  function enterRoom(){
-    navigate(`rtc/${rommNameRef.current.value}`, {state: rommNameRef.current.value})
+  function enterRoom(e, type){
+    if(type === "create") return navigate(`rtc/${rommNameRef.current.value}`, {state: rommNameRef.current.value})
+    if(type === "join") return navigate(`rtc/${e.target.textContent}`, {state: e.target.textContent})
   }
   function getRooms(){
     axios.get('/rooms').then(res => setRooms(res.data)).catch(err => console.log(err))
@@ -118,10 +119,10 @@ export default function Home(){
     <StyledContent.Home>
       <header>Home</header>
       <button onClick={getRooms}>refresh</button>
-      <ul>{rooms.map(r => <li key={r}>{r}</li>)}</ul>
+      <ul>{rooms.map(r => <li onClick={(e) => enterRoom(e, 'join')} key={r}>{r}</li>)}</ul>
       <section>
         <input type="text" ref={rommNameRef} placeholder="room name" />
-        <button onClick={enterRoom}>enter</button>
+        <button onClick={(e) => enterRoom(e, 'create')}>enter</button>
       </section>
       <video ref={localRef} autoPlay controls/>
       <section>
