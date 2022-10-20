@@ -21,19 +21,17 @@ async function getDevices(){
   }
 }
 // 나의 mediaStream를 반환한다
-if(false){
-  async function getMediaStream(deviceId = {}){
-    try{
-      const {videoId, audioId} = deviceId
-      const constraints = {
-        video: videoId ? {deviceId: {exact: videoId}} : true, 
-        audio: audioId ? {deviceId: {exact: audioId}} : true}
-      return await window.navigator.mediaDevices.getUserMedia(constraints)
-    }catch(err){
-      console.log('getMediaStream err: ', err)
+async function getMediaStream(deviceId = {}){
+  try{
+    const {videoId, audioId} = deviceId
+    const constraints = {
+      video: videoId ? {deviceId: {exact: videoId}} : true, 
+      audio: audioId ? {deviceId: {exact: audioId}} : true
     }
+    return await window.navigator.mediaDevices.getUserMedia(constraints)
+  }catch(err){
+    console.log('getMediaStream err: ', err)
   }
-  getMediaStream()
 }
 
 export default function Home(){
@@ -49,24 +47,18 @@ export default function Home(){
   const [rooms, setRooms] = useState([])
 
   const getMedia = useCallback(async function (deviceId){
-    const constraints = {
-      video: deviceId ? {deviceId: {exact: deviceId}} : true,
-      audio: true
-    }
-    console.log("getMedia selected deviceId: ", deviceId)
+    console.log("getMedia : ", deviceId)
     try{
       // 사용중이던 장치 사용 중지
       mediaStream?.getTracks().forEach(t => t.stop())
-      // 사용 가능한 입력 장치 리스트
       // 사용 가능한 입력 장치 리스트
       getDevices().then(res => {
         setVideos(res.videos)
         setAudios(res.audios)
       })
       // 카메라/오디오 입출력 연결
-      mediaStream = await window.navigator.mediaDevices.getUserMedia(constraints)
+      mediaStream = await getMediaStream(deviceId)
       localRef.current.srcObject = mediaStream
-      console.log('mediaStream: ', mediaStream)
       // 현재 사용중인 카메라/오디오
       setCrtVideo(mediaStream.getVideoTracks()[0])
       setCrtAudio(mediaStream.getAudioTracks()[0])
