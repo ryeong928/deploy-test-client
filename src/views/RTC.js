@@ -178,7 +178,7 @@ export default function RTC(){
   async function changeVideo(e){
     try{
       // 사용중이던 트랙 중지
-      mediaStream.getVideoTracks().forEach(t => t.stop())
+      PC.attachStreams.forEach(s => s.getVideoTracks().forEach(t => t.stop()))
       // 새로운 mediaStream 생성
       mediaStream = await getMediaStream({videoId: e.target.value})
       localRef.current.srcObject = mediaStream
