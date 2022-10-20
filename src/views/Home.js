@@ -33,6 +33,7 @@ if(false){
       console.log('getMediaStream err: ', err)
     }
   }
+  getMediaStream()
 }
 
 export default function Home(){
