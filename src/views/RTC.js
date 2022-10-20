@@ -99,28 +99,25 @@ export default function RTC(){
     mediaStream.getTracks().forEach(t => PC.addTrack(t, mediaStream))
   }, [])
 
-  const init = useCallback(async () => {
-    console.log('init')
+  const getMedia = useCallback(async () => {
+    console.log('getMedia')
     try{
+      // 사용중이던 장치 사용 중지
+      mediaStream?.getTracks().forEach(t => t.stop())
       // 사용 가능한 입력 장치 리스트
       getDevices().then(res => {
         setVideos(res.videos)
         setAudios(res.audios)
       })
-      // 내 장비 연결
+      // 카메라/오디오 입출력 연결
       mediaStream = await getMediaStream()
       localRef.current.srcObject = mediaStream
       console.log('mediaStream: ', mediaStream)
       // 현재 사용중인 카메라/오디오
       setCrtVideo(mediaStream.getVideoTracks()[0])
       setCrtAudio(mediaStream.getAudioTracks()[0])
-      // 연결 준비
-      
-      // 시그널링 시도
-
-
     }catch(err){
-      console.log(err)
+      console.log('getMedia error: ', err)
     }
   }, [name])
 
@@ -163,7 +160,7 @@ export default function RTC(){
       }
     })
     Promise.resolve(true)
-    .then(res => init())
+    .then(res => getMedia())
     .then(() => connect())
     .then(() => wsSend({type: 'join', data: name}))
 
@@ -175,14 +172,13 @@ export default function RTC(){
         mediaStream = null
       }
     }
-  }, [name, props, init, navigate, connect, wsSend])
+  }, [name, props, getMedia, navigate, connect, wsSend])
 
-  async function changeVideo(e){
+  function changeVideo(e){
     try{
       if(true){
         setCrtVideo(videos.find(v => v.deviceId === e.target.value))
-        mediaStream.getTracks().forEach(t => t.stop())
-
+        getMedia({videoId: e.target.value})
       }else{
         // 사용중이던 트랙 중지
         mediaStream.getVideoTracks().forEach(t => t.stop())

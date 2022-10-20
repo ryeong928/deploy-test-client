@@ -62,7 +62,7 @@ export default function Home(){
       setCrtVideo(mediaStream.getVideoTracks()[0])
       setCrtAudio(mediaStream.getAudioTracks()[0])
     }catch(err){
-      console.log(err)
+      console.log('getMedia error: ', err)
     }
   }, [])
 
