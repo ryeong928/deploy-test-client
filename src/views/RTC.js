@@ -99,6 +99,17 @@ export default function RTC(){
     console.log("connect end")
   }, [])
 
+  const stop = useCallback(() => {
+    if(mediaStream){
+      mediaStream.getTracks().forEach(t => t.stop())
+      mediaStream = null
+    }
+    if(PC){
+      PC.close()
+      PC = null
+    }
+  }, [])
+
   const getMedia = useCallback(async function (deviceId = {}){
     try{
       console.log("get media start")
@@ -167,13 +178,9 @@ export default function RTC(){
 
     return () => {
       wsSend({type: 'leave', data: name})
-      if(PC){
-        PC.close()
-        PC = null
-        mediaStream = null
-      }
+      stop()
     }
-  }, [name, props, getMedia, navigate, connect])
+  }, [name, props, getMedia, navigate, connect, stop])
 
 
   async function changeVideo(e){

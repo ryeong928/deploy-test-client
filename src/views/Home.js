@@ -90,7 +90,7 @@ export default function Home(){
   useEffect(() => {
     getMedia()
     return () => stop()
-  }, [getMedia])
+  }, [getMedia, stop])
 
   async function changeVideo(e){
     setCrtVideo(videos.find(v => v.deviceId === e.target.value))
