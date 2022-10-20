@@ -53,14 +53,16 @@ export default function RTC(){
   const [isAudioOn, setIsAudioOn] = useState(true)
 
   console.log('current device: ', [crtVideo, crtAudio])
+  console.log('device list: ', [videos, audios])
+
   const init = useCallback(async () => {
     console.log('init')
     try{
       // 사용 가능한 입력 장치 리스트
       window.navigator.mediaDevices.enumerateDevices()
-      .then(res => setVideos(res.filter(d => d.kind === "videoinput").map(d => ({deviceId: d.deviceId, label: d.label}))))
+      .then(res => setVideos(res.filter(d => d.kind === "videoinput")))
       window.navigator.mediaDevices.enumerateDevices()
-      .then(res => setAudios(res.filter(d => d.kind === "audioinput").map(d => ({deviceId: d.deviceId, label: d.label}))))
+      .then(res => setAudios(res.filter(d => d.kind === "audioinput")))
       // 내 장비 연결
       mediaStream = await window.navigator.mediaDevices.getUserMedia({video: true, audio: true})
       localRef.current.srcObject = mediaStream
@@ -102,6 +104,7 @@ export default function RTC(){
       if(type === "join"){
         console.log('the other joined')
         PC.createOffer().then(offer => {
+          console.log("offer: ", offer)
           PC.setLocalDescription(offer)
           console.log('send offer')
           wsSend({type: "offer", data: offer})
@@ -140,7 +143,7 @@ export default function RTC(){
       }
     }
   }, [name, props, init, navigate])
-  console.log([videos, audios])
+
   async function changeVideo(e){
     const deviceId = e.target.value
     const constraints = {
@@ -186,7 +189,7 @@ export default function RTC(){
   }
   function onoffVideo(){
     const mediaStreamTrack = mediaStream.getVideoTracks()
-    mediaStreamTrack.forEach(track => track.enabled = !track.enabled)
+    mediaStreamTrack.forEach(t => t.enabled = !t.enabled)
     setIsVideoOn(prev => !prev)
   }
   function onoffAudio(){
