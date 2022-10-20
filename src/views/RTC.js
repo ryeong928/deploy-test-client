@@ -81,9 +81,6 @@ export default function RTC(){
   const [isVideoOn, setIsVideoOn] = useState(true)
   const [isAudioOn, setIsAudioOn] = useState(true)
 
-  console.log('device list: ', [videos, audios])
-  console.log('current device: ', [crtVideo, crtAudio])
-
   const connect = useCallback(() => {
     console.log("connect start")
     PC = new RTCPeerConnection({iceServers})
@@ -211,7 +208,7 @@ export default function RTC(){
   }
   return(
     <StyledContent.RTC>
-      <header>RTC room {name}</header>
+      <header>v0.1 RTC room {name}</header>
       <main>
         <video ref={localRef} autoPlay controls/>
         <video ref={remoteRef} autoPlay controls/>
