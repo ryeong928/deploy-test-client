@@ -3,6 +3,17 @@ import { useNavigate } from "react-router-dom"
 import StyledContent from '../styled/content'
 import axios from "../api"
 
+/*
+  0. /room/name/user/id get 요청으로 인해 서버에서 무슨 동작을 하는지??
+
+  1. 웹소켓 연결
+
+  2. send({from: id, type: join, data: name})
+
+  3. onmessage data false | true
+
+  4. true => create offer
+*/
 let mediaStream
 // 현재 사용가능한 input devices 리스트를 반환한다
 async function getDevices(){
@@ -23,7 +34,6 @@ async function getDevices(){
 // 나의 mediaStream를 반환한다
 async function getMediaStream(deviceId = {}){
   try{
-    console.log('getMediaStream: ', deviceId)
     const {V, A} = deviceId
     const constraints = {
       video: V ? {deviceId: {exact: V}} : true, 
@@ -67,13 +77,19 @@ export default function Home(){
       console.log(err)
     }
   }, [])
-  
+
+  const stop = useCallback(() => {
+    mediaStream?.getTracks().forEach(t => t.stop())
+    mediaStream = null
+  }, [])
+
   useEffect(() => {
     getRooms()
   }, [])
 
   useEffect(() => {
     getMedia()
+    return () => stop()
   }, [getMedia])
 
   async function changeVideo(e){
