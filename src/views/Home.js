@@ -23,10 +23,11 @@ async function getDevices(){
 // 나의 mediaStream를 반환한다
 async function getMediaStream(deviceId = {}){
   try{
-    const {videoId, audioId} = deviceId
+    console.log('getMediaStream: ', deviceId)
+    const {V, A} = deviceId
     const constraints = {
-      video: videoId ? {deviceId: {exact: videoId}} : true, 
-      audio: audioId ? {deviceId: {exact: audioId}} : true
+      video: V ? {deviceId: {exact: V}} : true, 
+      audio: A ? {deviceId: {exact: A}} : true
     }
     return await window.navigator.mediaDevices.getUserMedia(constraints)
   }catch(err){
@@ -47,7 +48,7 @@ export default function Home(){
   const [rooms, setRooms] = useState([])
 
   const getMedia = useCallback(async function (deviceId){
-    window.alert("getMedia : ", deviceId.videoId, deviceId.audioId)
+    console.log("getMedia : ", deviceId.V, deviceId.A)
     try{
       // 사용중이던 장치 사용 중지
       mediaStream?.getTracks().forEach(t => t.stop())
@@ -85,11 +86,11 @@ export default function Home(){
 
   async function changeVideo(e){
     setCrtVideo(videos.find(v => v.deviceId === e.target.value))
-    await getMedia({videoId: e.target.value})
+    await getMedia({V: e.target.value})
   }
   async function changeAudio(e){
     setCrtAudio(audios.find(a => a.deviceId === e.target.value))
-    await getMedia({audioId: e.target.value})
+    await getMedia({A: e.target.value})
   }
   function onoffVideo(){
     const mediaStreamTrack = mediaStream.getVideoTracks()
