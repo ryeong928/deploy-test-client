@@ -53,7 +53,7 @@ async function getDevices(){
   }
 }
 // 나의 mediaStream를 반환한다
-async function getMediaStream(deviceId){
+async function getMediaStream(deviceId = {}){
   try{
     const {videoId, audioId} = deviceId
     const constraints = {
