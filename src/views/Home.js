@@ -85,10 +85,11 @@ export default function Home(){
 
   async function changeVideo(e){
     setCrtVideo(videos.find(v => v.deviceId === e.target.value))
-    await getMedia(e.target.value)
+    await getMedia({videoId: e.target.value})
   }
   function changeAudio(e){
     setCrtAudio(audios.find(a => a.deviceId === e.target.value))
+    await getMedia({audioId: e.target.value})
   }
   function onoffVideo(){
     const mediaStreamTrack = mediaStream.getVideoTracks()
