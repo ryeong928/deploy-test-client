@@ -47,7 +47,7 @@ export default function Home(){
   const [rooms, setRooms] = useState([])
 
   const getMedia = useCallback(async function (deviceId){
-    console.log("getMedia : ", deviceId)
+    window.alert("getMedia : ", deviceId.videoId, deviceId.audioId)
     try{
       // 사용중이던 장치 사용 중지
       mediaStream?.getTracks().forEach(t => t.stop())
@@ -87,7 +87,7 @@ export default function Home(){
     setCrtVideo(videos.find(v => v.deviceId === e.target.value))
     await getMedia({videoId: e.target.value})
   }
-  function changeAudio(e){
+  async function changeAudio(e){
     setCrtAudio(audios.find(a => a.deviceId === e.target.value))
     await getMedia({audioId: e.target.value})
   }
