@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import StyledContent from "../styled/content";
-import { socket } from '../App'
+import { ws } from '../App'
 
 let mediaStream
 const iceServers = [
@@ -24,7 +24,6 @@ const iceServers = [
     credential: "openrelayproject",
   },
 ]
-
 let PC
 /*
 free STUN, TURN server : https://www.metered.ca/tools/openrelay/
@@ -34,108 +33,229 @@ many corporate/enterprise firewall only allow port 80 or 443,
 it also supports turns + SSL for maximum compatibility.
 */
 
-let DC
-
+function wsSend(msg){
+  ws.send(JSON.stringify(msg))
+}
+// 현재 사용가능한 input devices 리스트를 반환한다
+async function getDevices(){
+  try{
+    const videos = []
+    const audios = []
+    const devices = await window.navigator.mediaDevices.enumerateDevices()
+    devices.forEach(d => {
+      if(d.kind === "videoinput") videos.push(d)
+      if(d.kind === "audioinput") audios.push(d)
+    })
+    return {videos, audios}
+  }catch(err){
+    console.log("getDevices err: ", err)
+    window.alert("getDevices err")
+  }
+}
+// 나의 mediaStream를 반환한다
+async function getMediaStream(deviceId = {}){
+  try{
+    const {videoId, audioId} = deviceId
+    const constraints = {
+      video: videoId ? {deviceId: {exact: videoId}} : true, 
+      audio: audioId ? {deviceId: {exact: audioId}} : true}
+    return await window.navigator.mediaDevices.getUserMedia(constraints)
+  }catch(err){
+    console.log('getMediaStream err: ', err)
+  }
+}
 
 export default function RTC(){
   const navigate = useNavigate()
   const {name} = useParams()
   const props = useLocation().state
-  // video
+  // video rendering
   const localRef = useRef(null)
   const remoteRef = useRef(null)
+  // devices
+  const [videos, setVideos] = useState([])
+  const [audios, setAudios] = useState([])
+  // current device in usage
+  const [crtVideo, setCrtVideo] = useState('')
+  const [crtAudio, setCrtAudio] = useState('')
+  // on/off 
+  const [isVideoOn, setIsVideoOn] = useState(true)
+  const [isAudioOn, setIsAudioOn] = useState(true)
 
-  const init = useCallback(async () => {
+  console.log('peer connection: ', PC)
+  console.log('device list: ', [videos, audios])
+  console.log('current device: ', [crtVideo, crtAudio])
+
+  const connect = useCallback(() => {
+    PC = new RTCPeerConnection({iceServers})
+    PC.addEventListener("icecandidate", (e) => {
+      console.log('send candidate')
+      wsSend({type: 'ice', data: e.candidate})
+    })
+    PC.addEventListener("track", (e) => {
+      console.log("remote track added")
+      remoteRef.current.srcObject = e.streams[0]
+    })
+    mediaStream.getTracks().forEach(t => PC.addTrack(t, mediaStream))
+  }, [])
+
+  const getMedia = useCallback(async () => {
+    console.log('getMedia')
     try{
-      const constraints = {video: true, audio: true}
-      mediaStream = await window.navigator.mediaDevices.getUserMedia(constraints)
-      console.log(mediaStream)
+      // 사용중이던 장치 사용 중지
+      mediaStream?.getTracks().forEach(t => t.stop())
+      // 사용 가능한 입력 장치 리스트
+      getDevices().then(res => {
+        setVideos(res.videos)
+        setAudios(res.audios)
+      })
+      // 카메라/오디오 입출력 연결
+      mediaStream = await getMediaStream()
       localRef.current.srcObject = mediaStream
-      PC = new RTCPeerConnection({iceServers})
-      PC.addEventListener("icecandidate", (e) => {
-        console.log('icecandidate send')
-        socket.emit("ice", e.candidate)
-      })
-      PC.addEventListener("track", (e) => {
-        console.log("remote track added")
-        remoteRef.current.srcObject = e.streams[0]
-      })
-      mediaStream.getTracks().forEach(t => PC.addTrack(t, mediaStream))
-      socket.emit("join", name)
+      console.log('mediaStream: ', mediaStream)
+      // 현재 사용중인 카메라/오디오
+      setCrtVideo(mediaStream.getVideoTracks()[0])
+      setCrtAudio(mediaStream.getAudioTracks()[0])
     }catch(err){
-      console.log(err)
+      console.log('getMedia error: ', err)
     }
-  }, [name])
+  }, [])
 
   useEffect(() => {
     if(props !== name) {
       window.alert("권한이 없습니다")
       return navigate('/', {replace: true})
     }
-    socket.on("join", async () => {
-      console.log("the other joined!")
-      DC = PC.createDataChannel("dc")
-      DC.addEventListener("open", (e) => {
-        console.log("DC open: ", e)
-        DC.send("DC host connected")
-      })
-      DC.addEventListener("message", (e) => {
-        console.log('DC message: ', e.data)
-      })
-      const offer = await PC.createOffer()
-      PC.setLocalDescription(offer)
-      console.log("offer send")
-      socket.emit("offer", offer)
-    })
-    socket.on("offer", async (offer) => {
-      console.log("offer get")
-      PC.addEventListener("datachannel", (e) => {
-        console.log("DC open: ", e)
-        DC = e.channel
-        DC.send("DC guest connected")
-        DC.addEventListener("message", (e) => {
-          console.log('DC message: ', e.data)
-        })
-      })
-      PC.setRemoteDescription(offer)
-      const answer = await PC.createAnswer()
-      PC.setLocalDescription(answer)
-      console.log("answer send")
-      socket.emit("answer", answer)
-    })
-    socket.on("answer", (answer) => {
-      console.log('answer get')
-      PC.setRemoteDescription(answer)
-    })
-    socket.on("ice", (icecandidate) => {
-      console.log('icecandidate get')
-      PC.addIceCandidate(icecandidate)
-    })
 
-    init()
+    ws.onmessage = ((e) => {
+      const {type, data} = JSON.parse(e.data)
+      if(type === "join"){
+        console.log('the other joined')
+        PC.createOffer().then(offer => {
+          PC.setLocalDescription(offer)
+          console.log('send offer')
+          wsSend({type: "offer", data: offer})
+        })
+      }
+      if(type === "full") {
+        window.alert("방이 꽉 찼습니다")
+        return navigate(-1)
+      }
+      // 시그널링
+      if(type === "offer"){
+        PC.setRemoteDescription(data)
+        PC.createAnswer().then(answer => {
+          PC.setLocalDescription(answer)
+          console.log("send answer")
+          wsSend({type: "answer", data: answer})
+        })
+      }
+      if(type === "answer"){
+        console.log("get answer")
+        PC.setRemoteDescription(data)
+      }
+      if(type === "ice"){
+        console.log("get candidate")
+        PC.addIceCandidate(data)
+      }
+    })
+    Promise.resolve(true)
+    .then(res => getMedia())
+    .then(() => connect())
+    .then(() => wsSend({type: 'join', data: name}))
 
     return () => {
-      console.log('data channel unmounted')
-      socket.disconnect()
+      wsSend({type: 'leave', data: name})
+      if(PC){
+        PC.close()
+        PC = null
+        mediaStream = null
+      }
     }
-  }, [name, props, init, navigate])
+  }, [name, props, getMedia, navigate, connect])
 
+  function changeVideo(e){
+    try{
+      if(true){
+        setCrtVideo(videos.find(v => v.deviceId === e.target.value))
+        getMedia({videoId: e.target.value})
+      }else{
+        // 사용중이던 트랙 중지
+        mediaStream.getVideoTracks().forEach(t => t.stop())
+        // 새로운 mediaStream 생성 및 등록
+        const tempStream = getMediaStream({videoId: e.target.value})
+        localRef.current.srcObject = tempStream
+        // 원격 변경
+        // const videoTrack = mediaStream.getVideoTracks()[0]
+        // const videoSender = PC.getSenders().find(s => s.track.kind === "video")
+        // videoSender.replaceTrack(videoTrack)
+        PC.replaceTrack(mediaStream.getVideoTracks()[0], tempStream.getVideoTracks()[0], mediaStream)
+      }
+    }catch(err){
+      console.log("video change error: ", err)
+      window.alert("video change error: ", err)
+    }
+  }
+  async function changeAudio(e){
+    try{
+      // 사용중이던 트랙 중지
+      mediaStream.getAudioTracks().forEach(t => t.stop())
+      // 새로운 mediaStream 생성 및 등록
+      mediaStream = await getMediaStream({audio: e.target.value})
+      localRef.current.srcObject = mediaStream
+      mediaStream.getTracks().forEach(t => PC.addTrack(t, mediaStream))
+      // 원격 변경
+      const audioTrack = mediaStream.getAudioTracks()[0]
+      const audioSender = PC.getSenders().find(s => s.track.kind === "audio")
+      audioSender.replaceTrack(audioTrack)
+    }catch(err){
+      console.log("audio change error: ", err)
+      window.alert("audio change error: ", err)
+    }
+  }
 
-
-
+  function onoffVideo(){
+    mediaStream.getVideoTracks().forEach(t => t.enabled = !t.enabled)
+    setIsVideoOn(prev => !prev)
+  }
+  function onoffAudio(){
+    mediaStream.getAudioTracks().forEach(t => t.enabled = !t.enabled)
+    setIsAudioOn(prev => !prev)
+  }
 
   return(
     <StyledContent.RTC>
       <header>RTC room {name}</header>
       <main>
-        <video ref={localRef} autoPlay/>
-        <video ref={remoteRef} autoPlay />
+        <video ref={localRef} autoPlay controls/>
+        <video ref={remoteRef} autoPlay controls/>
       </main>
+      <section>
+        <select onChange={changeVideo}>
+          {videos.map(v => (<option key={v.deviceId} value={v.deviceId} selected={v.label === crtVideo.label}>{v.label}</option>))}
+        </select>
+        <select onChange={changeAudio}>
+          {audios.map(a => (<option key={a.deviceId} value={a.deviceId} selected={a.label === crtAudio.label}>{a.label}</option>))}
+        </select>
+      </section>
+      <footer>
+        <button onClick={onoffVideo}>Camera {isVideoOn ? "On" : "Off"}</button>
+        <button onClick={onoffAudio}>Audio {isAudioOn ? "On" : "Off"}</button>
+      </footer>
     </StyledContent.RTC>
   )
 }
 
 /*
+  !! 양쪽의 mediaStream과 peerConnection 이 전부 생성 된걸 확인하고 나서 시그널링을 시작하자
+  -> mediaStream 생성
+  -> peerConnection 생성
+  -> offer 전달
+
+  !! 카메라(장치)를 변경할 때마다, 새로운 스트림을 생성하고 업데이트하여 재전송
+  새로 생성항 stream에서 얻은 새로운 deviceId를 가져다가
+  -> Sender : 상대방에게 보내진 나의 스트림의 트랙을 컨트롤하는 기능
+
   PC.addTrack(MediaStreamTrack, MediaStream): RTCRtpSender instance
   : 상대방에게 보낼 트랙을 추가
     _MediaStreamTrack : PC에 추가할 객체
@@ -143,4 +263,12 @@ export default function RTC(){
 
   track event : 새로운 트랙이 RTCRtpReceiver에 추가되면 발생하는 이벤트
 
+  send offer, candidate
+  get offer, candidate
+  send answer, candidate
+  get answer, candidate
+
+  양쪽에서 상대방의 stream을 받고, srcObject에 등록
+
 */
+

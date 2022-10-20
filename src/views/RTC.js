@@ -82,7 +82,6 @@ export default function RTC(){
   const [isVideoOn, setIsVideoOn] = useState(true)
   const [isAudioOn, setIsAudioOn] = useState(true)
 
-  console.log('peer connection: ', PC)
   console.log('device list: ', [videos, audios])
   console.log('current device: ', [crtVideo, crtAudio])
 
@@ -100,7 +99,6 @@ export default function RTC(){
   }, [])
 
   const getMedia = useCallback(async () => {
-    console.log('getMedia')
     try{
       // 사용중이던 장치 사용 중지
       mediaStream?.getTracks().forEach(t => t.stop())
@@ -112,7 +110,6 @@ export default function RTC(){
       // 카메라/오디오 입출력 연결
       mediaStream = await getMediaStream()
       localRef.current.srcObject = mediaStream
-      console.log('mediaStream: ', mediaStream)
       // 현재 사용중인 카메라/오디오
       setCrtVideo(mediaStream.getVideoTracks()[0])
       setCrtAudio(mediaStream.getAudioTracks()[0])
@@ -160,7 +157,7 @@ export default function RTC(){
       }
     })
     Promise.resolve(true)
-    .then(res => getMedia())
+    .then(() => getMedia())
     .then(() => connect())
     .then(() => wsSend({type: 'join', data: name}))
 
