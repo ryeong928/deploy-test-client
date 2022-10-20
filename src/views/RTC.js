@@ -176,17 +176,15 @@ export default function RTC(){
   }, [name, props, init, navigate])
 
   async function changeVideo(e){
-    console.log("selected video deviceId: ", e.target.value)
     try{
-      // 새로운 mediaStream 생성 및 등록
+      // 사용중이던 트랙 중지
+      mediaStream.getVideoTracks().forEach(t => t.stop())
+      // 새로운 mediaStream 생성
       mediaStream = await getMediaStream({videoId: e.target.value})
       localRef.current.srcObject = mediaStream
-      console.log('new mediaStream: ', mediaStream)
       // 원격 변경
       const videoTrack = mediaStream.getVideoTracks()[0]
-      console.log('videoTrack: ', videoTrack)
       const videoSender = PC.getSenders().find(s => s.track.kind === "video")
-      console.log('videoSender: ', videoSender)
       videoSender.replaceTrack(videoTrack)
     }catch(err){
       console.log("video change error: ", err)
@@ -194,17 +192,15 @@ export default function RTC(){
     }
   }
   async function changeAudio(e){
-    console.log("selected audio deviceId: ", e.target.value)
     try{
+      // 사용중이던 트랙 중지
+      mediaStream.getAudioTracks().forEach(t => t.stop())
       // 새로운 mediaStream 생성 및 등록
       mediaStream = await getMediaStream({audio: e.target.value})
       localRef.current.srcObject = mediaStream
-      console.log('new mediaStream: ', mediaStream)
       // 원격 변경
       const audioTrack = mediaStream.getAudioTracks()[0]
-      console.log('audioTrack: ', audioTrack)
       const audioSender = PC.getSenders().find(s => s.track.kind === "audio")
-      console.log('audioSender: ', audioSender)
       audioSender.replaceTrack(audioTrack)
     }catch(err){
       console.log("audio change error: ", err)
