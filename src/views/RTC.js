@@ -183,7 +183,7 @@ export default function RTC(){
   async function changeVideo(e){
     setCrtVideo(videos.find(v => v.deviceId === e.target.value))
     await getMedia({V: e.target.value})
-    if(false){
+    if(true){
         const videoTrack = mediaStream.getVideoTracks()[0]
         const videoSender = PC.getSenders().find(s => s.track.kind === "video")
         videoSender.replaceTrack(videoTrack)
@@ -192,7 +192,7 @@ export default function RTC(){
   async function changeAudio(e){
     setCrtAudio(audios.find(a => a.deviceId === e.target.value))
     await getMedia({A: e.target.value})
-    if(false){
+    if(true){
       const audioTrack = mediaStream.getAudioTracks()[0]
       const audioSender = PC.getSenders().find(s => s.track.kind === "audio")
       audioSender.replaceTrack(audioTrack)
@@ -208,7 +208,7 @@ export default function RTC(){
   }
   return(
     <StyledContent.RTC>
-      <header>v0.1 RTC room {name}</header>
+      <header>v0.2 RTC room {name}</header>
       <main>
         <video ref={localRef} autoPlay controls/>
         <video ref={remoteRef} autoPlay controls/>
