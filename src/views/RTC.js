@@ -250,6 +250,13 @@ export default function RTC(){
 
   양쪽에서 상대방의 stream을 받고, srcObject에 등록
 
+  !! MPEG(Moving Picture Experts Group) : 코덱이나 파일 확장자를 의미하기도 하고, 표준 규격 자체를 포괄하는 단어로 쓰인다
+
+  !! 코덱 : 비디오와 오디오의 인코딩 규격/방식
+
+  그중에서 NCN의 단말의 코덱은 MPEF-4 Part 10 (H.264 / AVC) 만을 지원한다
+  
+
   !! SDP(Session Description Protocol) : 사용자의 미디어와 네트워크에 관한 정보
 
 

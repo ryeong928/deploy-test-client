@@ -15,6 +15,7 @@ import axios from "../api"
   4. true => create offer
 */
 let mediaStream
+let PC
 // 현재 사용가능한 input devices 리스트를 반환한다
 async function getDevices(){
   try{
@@ -77,10 +78,19 @@ export default function Home(){
       console.log(err)
     }
   }, [])
-
+  const connect = useCallback(() => {
+    PC = new RTCPeerConnection()
+    mediaStream.getTracks().forEach(t => PC.addTrack(t, mediaStream))
+  }, [])
   const stop = useCallback(() => {
-    mediaStream?.getTracks().forEach(t => t.stop())
-    mediaStream = null
+    if(mediaStream){
+      mediaStream.getTracks().forEach(t => t.stop())
+      mediaStream = null
+    }
+    if(PC){
+      PC.close()
+      PC = null
+    }
   }, [])
 
   useEffect(() => {
@@ -88,9 +98,16 @@ export default function Home(){
   }, [])
 
   useEffect(() => {
-    getMedia()
+    Promise.resolve(true)
+    .then(() => getMedia())
+    .then(() => connect())
+    .then(() => {
+      PC.createOffer().then(offer => {
+        console.log("create offer: ", offer)
+      })
+    })
     return () => stop()
-  }, [getMedia, stop])
+  }, [getMedia, connect, stop])
 
   async function changeVideo(e){
     setCrtVideo(videos.find(v => v.deviceId === e.target.value))
