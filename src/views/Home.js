@@ -37,9 +37,15 @@ async function getMediaStream(deviceId = {}){
   try{
     const {V, A} = deviceId
     const constraints = {
-      video: V ? {deviceId: {exact: V}, facingMode: {exact: "user"}} : true, 
+      video: {
+        facingMode: "environment",
+        width: "300px",
+        height: "300px"
+      }, 
       audio: A ? {deviceId: {exact: A}} : true
     }
+    if(V) constraints.video.deviceId = {exact: V}
+    console.log("constraints: ", constraints)
     return await window.navigator.mediaDevices.getUserMedia(constraints)
   }catch(err){
     console.log('getMediaStream err: ', err)
@@ -137,14 +143,8 @@ export default function Home(){
   function getRooms(){
     axios.get('/rooms').then(res => setRooms(res.data)).catch(err => console.log(err))
   }
-  function changeMobileCamera(){
-    if(!mediaStream) return
-    const videoTrack = mediaStream.getVideoTracks()[0]
-    const C = videoTrack.getSettings()
-    console.log("current facingMode: ", C.facingMode)
-    C.facingMode.exact = C.facingMode.exact === "user" ? "environment" : "user"
-    console.log("current facingMode: ", C.facingMode)
-    videoTrack.applyConstraints(C)
+  function checkVideoTrack(){
+    console.log('video track : ', [crtVideo.getConstraints(), crtVideo.getSettings()])
   }
   return(
     <StyledContent.Home>
@@ -155,9 +155,8 @@ export default function Home(){
         <input type="text" ref={rommNameRef} placeholder="room name" />
         <button onClick={(e) => enterRoom(e, 'create')}>enter</button>
       </section>
-      <video ref={localRef} autoPlay controls/>
+      <video ref={localRef} autoPlay controls width={500} height={500}/>
       <section>
-        <button onClick={changeMobileCamera}>change mobile camera</button>
         <select onChange={changeVideo}>
           {videos.map(v => (<option key={v.deviceId} value={v.deviceId} selected={v.label === crtVideo.label}>{v.label}</option>))}
         </select>
@@ -168,6 +167,7 @@ export default function Home(){
       <section>
         <button onClick={onoffVideo}>Camera {isVideoOn ? "On" : "Off"}</button>
         <button onClick={onoffAudio}>Audio {isAudioOn ? "On" : "Off"}</button>
+        <button onClick={checkVideoTrack}>VideoTrack</button>
       </section>
       {SDP && (
         <footer>
@@ -184,10 +184,4 @@ export default function Home(){
     .enumerateDevices() : 연결된 I/O devices의 MediaDeviceInfo 배열을 반환한다
     .getUserMedia() : 유저 허락을 받아 비디오/음성 device를 키고, 각 input device의 MediaStream을 반환한다
 
-  MediaStream
-  .addTrack()
-  .getTracks()
-  .getTrackById()
-  .getVideoTracks() : 해당 스트림의 video track을 나타내는 MediaStreamTrack 인스턴스 배열을 반환
-  .getAudioTracks() : 해당 스트림의 audio track을 나타내는 MediaStreamTrack 인스턴스 배열을 반환
 */

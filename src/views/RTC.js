@@ -55,7 +55,7 @@ async function getMediaStream(deviceId = {}){
   try{
     const {V, A} = deviceId
     const constraints = {
-      video: V ? {deviceId: {exact: V}, facingMode: "user"} : true, 
+      video: V ? {deviceId: {exact: V}} : true, 
       audio: A ? {deviceId: {exact: A}} : true
     }
     return await window.navigator.mediaDevices.getUserMedia(constraints)
@@ -186,14 +186,6 @@ export default function RTC(){
   }, [name, props, getMedia, navigate, connect, stop])
 
 
-  function changeMobileCamera(){
-    if(!mediaStream) return
-    const videoTrack = mediaStream.getVideoTracks()[0]
-    const C = videoTrack.getSettings()
-    window.alert("current facingMode: ", C.facingMode)
-    C.facingMode = C.facingMode === "user" ? "environment" : "user"
-    videoTrack.applyConstraints(C)
-  }
   async function changeVideo(e){
     setCrtVideo(videos.find(v => v.deviceId === e.target.value))
     await getMedia({V: e.target.value})
@@ -229,7 +221,6 @@ export default function RTC(){
         <video ref={remoteRef} autoPlay controls/>
       </main>
       <section>
-        <button onClick={changeMobileCamera}>change mobile camera</button>
         <select onChange={changeVideo}>
           {videos.map(v => (<option key={v.deviceId} value={v.deviceId} selected={v.label === crtVideo.label}>{v.label}</option>))}
         </select>
@@ -275,6 +266,11 @@ export default function RTC(){
 
 
   ★★★ MediaStream
+    .addTrack()
+    .getTracks()
+    .getTrackById()
+    .getVideoTracks() : 해당 스트림의 video track을 나타내는 MediaStreamTrack 인스턴스 배열을 반환
+    .getAudioTracks() : 해당 스트림의 audio track을 나타내는 MediaStreamTrack 인스턴스 배열을 반환
 
 
   ★★★ MediaStreamTrack
