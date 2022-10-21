@@ -143,6 +143,9 @@ export default function RTC(){
         window.alert("방이 꽉 찼습니다")
         return navigate(-1)
       }
+      if(type === "leave"){
+        console.log("the other left")
+      }
       // 시그널링
       if(type === "offer"){
         PC.setRemoteDescription(data)
