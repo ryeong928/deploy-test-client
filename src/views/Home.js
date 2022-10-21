@@ -150,6 +150,8 @@ export default function Home(){
     const VT = mediaStream.getVideoTracks()[0]
     const VC = VT.getConstraints()
     VC.facingMode = VC.facingMode === "user" ? "environment" : "user"
+    VC.width.max = VC.width.max === 500 ? 1000 : 500
+    VC.height.max = VC.height.max === 500 ? 1000 : 500
     console.log("change camera : ", VC)
     VT.applyConstraints(VC)
   }
