@@ -187,7 +187,9 @@ export default function RTC(){
 
 
   function changeMobileCamera(){
-    const C = mediaStream.getVideoTracks()[0].getConstraints()
+    if(!mediaStream) return
+    const videoTrack = mediaStream.getVideoTracks()[0]
+    const C = videoTrack.getConstraints()
     C.facingMode = C.facingMode === "user" ? "environment" : "user"
     videoTrack.applyConstraints(C)
   }

@@ -137,7 +137,13 @@ export default function Home(){
   function getRooms(){
     axios.get('/rooms').then(res => setRooms(res.data)).catch(err => console.log(err))
   }
-
+  function changeMobileCamera(){
+    if(!mediaStream) return
+    const videoTrack = mediaStream.getVideoTracks()[0]
+    const C = videoTrack.getConstraints()
+    C.facingMode = C.facingMode === "user" ? "environment" : "user"
+    videoTrack.applyConstraints(C)
+  }
   return(
     <StyledContent.Home>
       <header>Home</header>
@@ -149,6 +155,7 @@ export default function Home(){
       </section>
       <video ref={localRef} autoPlay controls/>
       <section>
+        <button onClick={changeMobileCamera}>change mobile camera</button>
         <select onChange={changeVideo}>
           {videos.map(v => (<option key={v.deviceId} value={v.deviceId} selected={v.label === crtVideo.label}>{v.label}</option>))}
         </select>
