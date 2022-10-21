@@ -135,7 +135,7 @@ export default function RTC(){
         console.log('the other joined')
         PC.createOffer().then(offer => {
           PC.setLocalDescription(offer)
-          console.log('send offer')
+          console.log('send offer ', offer)
           wsSend({type: "offer", data: offer})
         })
       }
@@ -148,15 +148,16 @@ export default function RTC(){
       }
       // 시그널링
       if(type === "offer"){
+        console.log("get offer ", data)
         PC.setRemoteDescription(data)
         PC.createAnswer().then(answer => {
           PC.setLocalDescription(answer)
-          console.log("send answer")
+          console.log("send answer ", answer)
           wsSend({type: "answer", data: answer})
         })
       }
       if(type === "answer"){
-        console.log("get answer")
+        console.log("get answer ", data)
         PC.setRemoteDescription(data)
       }
       if(type === "ice"){
@@ -204,7 +205,7 @@ export default function RTC(){
   }
   return(
     <StyledContent.RTC>
-      <header>v0.2 RTC room {name}</header>
+      <header>v0.3 RTC room {name}</header>
       <main>
         <video ref={localRef} autoPlay controls/>
         <video ref={remoteRef} autoPlay controls/>
@@ -248,5 +249,8 @@ export default function RTC(){
   get answer, candidate
 
   양쪽에서 상대방의 stream을 받고, srcObject에 등록
+
+  !! SDP(Session Description Protocol) : 사용자의 미디어와 네트워크에 관한 정보
+
 
 */
