@@ -143,7 +143,7 @@ export default function Home(){
     const C = videoTrack.getSettings()
     console.log("current facingMode: ", C)
     C.facingMode = C.facingMode === "user" ? "environment" : "user"
-    videoTrack.applyConstraints(C)
+    videoTrack.applyConstraints({facingMode: {exact: "environment"}})
   }
   return(
     <StyledContent.Home>
