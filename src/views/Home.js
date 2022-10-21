@@ -58,6 +58,8 @@ export default function Home(){
   const rommNameRef = useRef(null)
   const [rooms, setRooms] = useState([])
 
+  const [SDP, setSDP] = useState()
+
   const getMedia = useCallback(async function (deviceId = {}){
     console.log("getMedia : ", deviceId.V, deviceId.A)
     try{
@@ -103,7 +105,7 @@ export default function Home(){
     .then(() => connect())
     .then(() => {
       PC.createOffer().then(offer => {
-        console.log("create offer: ", offer)
+        setSDP(offer)
       })
     })
     return () => stop()
@@ -154,6 +156,12 @@ export default function Home(){
         <button onClick={onoffVideo}>Camera {isVideoOn ? "On" : "Off"}</button>
         <button onClick={onoffAudio}>Audio {isAudioOn ? "On" : "Off"}</button>
       </section>
+      {SDP && (
+        <section>
+          <header>{SDP.type}</header>
+          <div style={{whiteSpace: "pre-line"}}>{SDP.sdp}</div>
+        </section>
+      )}
     </StyledContent.Home>
   )
 }
