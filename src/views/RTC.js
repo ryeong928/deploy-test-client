@@ -64,12 +64,7 @@ async function getMediaStream(deviceId = {}){
   }
 }
 function getStringSize(str){
-  return (function(str, b, i, c){
-    for(b = i = 0; c = str.charCodeAt(i) ;i++){
-      b+=c >> 11 ? 3 : c >> 7 ? 2 : 1
-    };
-    return b
-  }(str))
+  return str.replace(/[\0-\x7f]|([0-\u07ff]|(.))/g,"$&$1$2").length
 }
 export default function RTC(){
   const navigate = useNavigate()
