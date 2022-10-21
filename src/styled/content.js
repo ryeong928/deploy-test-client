@@ -17,6 +17,9 @@ const Home = styled(Content)`
   display: flex;
   gap: 20px;
 }
+& > footer{
+  
+}
 & > ul{
   display: flex;
   gap: 10px;

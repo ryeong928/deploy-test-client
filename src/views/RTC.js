@@ -64,13 +64,10 @@ async function getMediaStream(deviceId = {}){
   }
 }
 function getStringSize(str){
-  let size
-  for(let i=0; i<str.length; i++){
-    if(escape(str.charAt(i)).length >= 4) size += 3
-    else if(escape(str.charAt(i)) === "%A7") size += 3
-    else if(escape(str.charAt(i)) !== "%0D") size++
-  }
-  return size
+  return (function(str, b, i, c){
+    for(b = i = 0; c = str.charCodeAt(i++) ;b+=c >> 11 ? 3 : c >> 7 ? 2 : 1);
+    return b
+  }(str))
 }
 export default function RTC(){
   const navigate = useNavigate()
