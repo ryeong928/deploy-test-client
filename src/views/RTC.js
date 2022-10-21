@@ -80,6 +80,9 @@ export default function RTC(){
   // on/off 
   const [isVideoOn, setIsVideoOn] = useState(true)
   const [isAudioOn, setIsAudioOn] = useState(true)
+  // sdp
+  const [OFFER, setOFFER] = useState()
+  const [ANSWER, setANSWER] = useState()
 
   const connect = useCallback(() => {
     PC = new RTCPeerConnection({iceServers})
@@ -134,6 +137,7 @@ export default function RTC(){
       if(type === "join"){
         console.log('the other joined')
         PC.createOffer().then(offer => {
+          setOFFER(prev => offer)
           PC.setLocalDescription(offer)
           console.log('send offer ', offer)
           wsSend({type: "offer", data: offer})
@@ -149,15 +153,18 @@ export default function RTC(){
       // 시그널링
       if(type === "offer"){
         console.log("get offer ", data)
+        setOFFER(prev => data)
         PC.setRemoteDescription(data)
         PC.createAnswer().then(answer => {
           PC.setLocalDescription(answer)
           console.log("send answer ", answer)
+          setANSWER(prev => answer)
           wsSend({type: "answer", data: answer})
         })
       }
       if(type === "answer"){
         console.log("get answer ", data)
+        setANSWER(data)
         PC.setRemoteDescription(data)
       }
       if(type === "ice"){
@@ -222,6 +229,16 @@ export default function RTC(){
         <button onClick={onoffVideo}>Camera {isVideoOn ? "On" : "Off"}</button>
         <button onClick={onoffAudio}>Audio {isAudioOn ? "On" : "Off"}</button>
       </footer>
+      <section>
+        {OFFER && (<>
+          <h4>{OFFER.type}</h4>
+          <div style={{whiteSpace: "pre-line"}}>{OFFER.sdp}</div>
+        </>)}
+        {ANSWER && (<>
+          <h4>{ANSWER.type}</h4>
+          <div style={{whiteSpace: "pre-line"}}>{ANSWER.sdp}</div>
+        </>)}
+      </section>
     </StyledContent.RTC>
   )
 }
@@ -253,8 +270,15 @@ export default function RTC(){
 
 
   !! SDP(Session Description Protocol) : 사용자의 미디어와 네트워크에 관한 정보
+    v : SDP의 현재 프로토콜 버전
+    o : SDP를 생성한 Peer의 식별자. username, sessionId, sessionVersion, networkType, addressType, unicastAddress
+    s : session name
+    t : 세션 활성화 시간. start time, end time
+    m : 미디어 라인. 각 장치 스트림에 관한 속성들에 대한 정보를 가지고 있다
+    a=rtpmap:프로파일번호 코덱종류/샘플링주기/채널수
 
-
+  !! 코덱 적용 우선순위 변경하기
+    m=video 에서 H.264에 해당하는 프로파일번호를 맨 앞으로 변경하자
 */
 
 /*
