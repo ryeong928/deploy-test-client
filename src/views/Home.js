@@ -39,8 +39,8 @@ async function getMediaStream(deviceId = {}){
     const constraints = {
       video: {
         facingMode: "environment",
-        width: "300px",
-        height: "300px"
+        width: {max: 300},
+        height: {max: 300}
       }, 
       audio: A ? {deviceId: {exact: A}} : true
     }
@@ -146,6 +146,13 @@ export default function Home(){
   function checkVideoTrack(){
     console.log('video track : ', [crtVideo.getConstraints(), crtVideo.getSettings()])
   }
+  function changeMobileCamera(){
+    const VT = mediaStream.getVideoTracks()[0]
+    const VC = VT.getConstraints()
+    VC.facingMode === "user" ? "environment" : "user"
+    console.log("change camera : ", VC)
+    VT.applyConstraints(VC)
+  }
   return(
     <StyledContent.Home>
       <header>Home</header>
@@ -167,7 +174,10 @@ export default function Home(){
       <section>
         <button onClick={onoffVideo}>Camera {isVideoOn ? "On" : "Off"}</button>
         <button onClick={onoffAudio}>Audio {isAudioOn ? "On" : "Off"}</button>
+      </section>
+      <section>
         <button onClick={checkVideoTrack}>VideoTrack</button>
+        <button onClick={changeMobileCamera}>Change Mobile Camera</button>
       </section>
       {SDP && (
         <footer>
