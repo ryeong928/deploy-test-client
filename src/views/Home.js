@@ -37,7 +37,7 @@ async function getMediaStream(deviceId = {}){
   try{
     const {V, A} = deviceId
     const constraints = {
-      video: V ? {deviceId: {exact: V}, facingMode: "user"} : true, 
+      video: V ? {deviceId: {exact: V}, facingMode: {exact: "user"}} : true, 
       audio: A ? {deviceId: {exact: A}} : true
     }
     return await window.navigator.mediaDevices.getUserMedia(constraints)
@@ -141,9 +141,10 @@ export default function Home(){
     if(!mediaStream) return
     const videoTrack = mediaStream.getVideoTracks()[0]
     const C = videoTrack.getSettings()
-    console.log("current facingMode: ", C)
-    C.facingMode = C.facingMode === "user" ? "environment" : "user"
-    videoTrack.applyConstraints({facingMode: {exact: "environment"}})
+    console.log("current facingMode: ", C.facingMode)
+    C.facingMode.exact = C.facingMode.exact === "user" ? "environment" : "user"
+    console.log("current facingMode: ", C.facingMode)
+    videoTrack.applyConstraints(C)
   }
   return(
     <StyledContent.Home>
