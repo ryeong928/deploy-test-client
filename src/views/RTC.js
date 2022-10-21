@@ -55,7 +55,7 @@ async function getMediaStream(deviceId = {}){
   try{
     const {V, A} = deviceId
     const constraints = {
-      video: V ? {deviceId: {exact: V}} : true, 
+      video: V ? {deviceId: {exact: V}, facingMode: "user"} : true, 
       audio: A ? {deviceId: {exact: A}} : true
     }
     return await window.navigator.mediaDevices.getUserMedia(constraints)
@@ -186,6 +186,11 @@ export default function RTC(){
   }, [name, props, getMedia, navigate, connect, stop])
 
 
+  function changeMobileCamera(){
+    const C = mediaStream.getVideoTracks()[0].getConstraints()
+    C.facingMode = C.facingMode === "user" ? "environment" : "user"
+    videoTrack.applyConstraints(C)
+  }
   async function changeVideo(e){
     setCrtVideo(videos.find(v => v.deviceId === e.target.value))
     await getMedia({V: e.target.value})
@@ -220,6 +225,7 @@ export default function RTC(){
         <video ref={remoteRef} autoPlay controls/>
       </main>
       <section>
+        <button onClick={changeMobileCamera}>change mobile camera</button>
         <select onChange={changeVideo}>
           {videos.map(v => (<option key={v.deviceId} value={v.deviceId} selected={v.label === crtVideo.label}>{v.label}</option>))}
         </select>
@@ -246,32 +252,36 @@ export default function RTC(){
 }
 
 /*
-  !! 양쪽의 mediaStream과 peerConnection 이 전부 생성 된걸 확인하고 나서 시그널링을 시작하자
+  ★★★ 양쪽의 mediaStream과 peerConnection 이 전부 생성 된걸 확인하고 나서 시그널링을 시작하자
   -> mediaStream 생성
   -> peerConnection 생성
   -> offer 전달
 
-  !! 카메라(장치)를 변경할 때마다, 새로운 스트림을 생성하고 업데이트하여 재전송
-  새로 생성항 stream에서 얻은 새로운 deviceId를 가져다가
-  -> Sender : 상대방에게 보내진 나의 스트림의 트랙을 컨트롤하는 기능
 
-  PC.addTrack(MediaStreamTrack, MediaStream): RTCRtpSender instance
-  : 상대방에게 보낼 트랙을 추가
-    _MediaStreamTrack : PC에 추가할 객체
-    _MediaStream : 트랙이 추가될 객체
-
-  track event : 새로운 트랙이 RTCRtpReceiver에 추가되면 발생하는 이벤트
-
-  send offer, candidate
-  get offer, candidate
-  send answer, candidate
-  get answer, candidate
-
-  양쪽에서 상대방의 stream을 받고, srcObject에 등록
+  ★★★ MediaTrackConstraints
+  (video track)
+  .width
+  .height
+  .aspectRatio
+  .frameRate
+  .facingMode
 
 
+  ★★★ MediaStream
 
-  !! SDP(Session Description Protocol) : 사용자의 미디어와 네트워크에 관한 정보
+
+  ★★★ MediaStreamTrack
+  .getConstraints() : get the set of constraints that are currently applied to the media
+  .applyConstraints(MediaTrackConstraints):Promise : set a set of constraints to the track (frame rate, dimensions, etc)
+
+  ex) function changeMobileCamera(){
+    const C = videoTrack.getConstraints()
+    C.facingMode = C.facingMode === "user" ? "environment" : "user"
+    videoTrack.applyConstraints(C)
+  }
+
+
+  ★★★ SDP(Session Description Protocol, offer/answer) : 사용자의 미디어와 네트워크에 관한 정보
     v : SDP의 현재 프로토콜 버전
     o : SDP를 생성한 Peer의 식별자. username, sessionId, sessionVersion, networkType, addressType, unicastAddress
     s : session name
@@ -279,7 +289,7 @@ export default function RTC(){
     m : 미디어 라인. 각 장치 스트림에 관한 속성들에 대한 정보를 가지고 있다
     a=rtpmap:프로파일번호 코덱종류/샘플링주기/채널수
 
-  !! 코덱 적용 우선순위 변경하기
+  코덱 적용 우선순위 변경하기
     m=video 에서 H.264에 해당하는 프로파일번호를 맨 앞으로 변경하자
 */
 
@@ -290,4 +300,8 @@ export default function RTC(){
   가장 흔히 사용되고, 고화질 영상의 뛰어난 압축 효율성을 보이는 H.264 코덱과 함께 사용된다
 
   -코덱 : 영상이나 음성 신호를 디지털 신호로 변환하거나 반대로 변환하는 기능을 수행하는 기술
+*/
+
+/*
+
 */
