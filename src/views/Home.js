@@ -140,7 +140,7 @@ export default function Home(){
   function changeMobileCamera(){
     if(!mediaStream) return
     const videoTrack = mediaStream.getVideoTracks()[0]
-    const C = videoTrack.getConstraints()
+    const C = videoTrack.getSettings()
     console.log("current facingMode: ", C)
     C.facingMode = C.facingMode === "user" ? "environment" : "user"
     videoTrack.applyConstraints(C)

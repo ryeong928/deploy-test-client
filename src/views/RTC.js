@@ -189,7 +189,7 @@ export default function RTC(){
   function changeMobileCamera(){
     if(!mediaStream) return
     const videoTrack = mediaStream.getVideoTracks()[0]
-    const C = videoTrack.getConstraints()
+    const C = videoTrack.getSettings()
     window.alert("current facingMode: ", C.facingMode)
     C.facingMode = C.facingMode === "user" ? "environment" : "user"
     videoTrack.applyConstraints(C)
@@ -241,6 +241,10 @@ export default function RTC(){
         <button onClick={onoffAudio}>Audio {isAudioOn ? "On" : "Off"}</button>
       </footer>
       <section>
+        <button onClick={checkBothVideoTrack}>check both videoTrack</button>
+
+      </section>
+      <section>
         {OFFER && (<>
           <h4>{OFFER.type}: {getStringSize(JSON.stringify(OFFER))}Bytes</h4>
           <div style={{whiteSpace: "pre-line"}}>{OFFER.sdp}</div>
@@ -275,6 +279,7 @@ export default function RTC(){
 
   ★★★ MediaStreamTrack
   .getConstraints() : get the set of constraints that are currently applied to the media
+  .getSettings() : get a really applied set of constraints
   .applyConstraints(MediaTrackConstraints):Promise : set a set of constraints to the track (frame rate, dimensions, etc)
 
   ex) function changeMobileCamera(){
