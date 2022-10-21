@@ -45,6 +45,15 @@ async function getMediaStream(deviceId = {}){
     console.log('getMediaStream err: ', err)
   }
 }
+function getStringSize(str){
+  let size
+  for(let i=0; i<str.length; i++){
+    if(escape(str.charAt(i)).length >= 4) size += 3
+    else if(escape(str.charAt(i)) === "%A7") size += 3
+    else if(escape(str.charAt(i)) !== "%0D") size++
+  }
+  return size
+}
 
 export default function Home(){
   const localRef = useRef(null)
@@ -134,6 +143,7 @@ export default function Home(){
   function getRooms(){
     axios.get('/rooms').then(res => setRooms(res.data)).catch(err => console.log(err))
   }
+
   return(
     <StyledContent.Home>
       <header>Home</header>
@@ -158,7 +168,7 @@ export default function Home(){
       </section>
       {SDP && (
         <section>
-          <header>{SDP.type}</header>
+          <header>{SDP.type}: {getStringSize(JSON.stringify(SDP))}Bytes</header>
           <div style={{whiteSpace: "pre-line"}}>{SDP.sdp}</div>
         </section>
       )}

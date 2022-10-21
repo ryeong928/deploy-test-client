@@ -63,7 +63,15 @@ async function getMediaStream(deviceId = {}){
     console.log('getMediaStream err: ', err)
   }
 }
-
+function getStringSize(str){
+  let size
+  for(let i=0; i<str.length; i++){
+    if(escape(str.charAt(i)).length >= 4) size += 3
+    else if(escape(str.charAt(i)) === "%A7") size += 3
+    else if(escape(str.charAt(i)) !== "%0D") size++
+  }
+  return size
+}
 export default function RTC(){
   const navigate = useNavigate()
   const {name} = useParams()
@@ -231,11 +239,11 @@ export default function RTC(){
       </footer>
       <section>
         {OFFER && (<>
-          <h4>{OFFER.type}</h4>
+          <h4>{OFFER.type}: {getStringSize(JSON.stringify(OFFER))}Bytes</h4>
           <div style={{whiteSpace: "pre-line"}}>{OFFER.sdp}</div>
         </>)}
         {ANSWER && (<>
-          <h4>{ANSWER.type}</h4>
+          <h4>{ANSWER.type}: {getStringSize(JSON.stringify(ANSWER))}Bytes</h4>
           <div style={{whiteSpace: "pre-line"}}>{ANSWER.sdp}</div>
         </>)}
       </section>
