@@ -220,6 +220,7 @@ export default function RTC(){
     mediaStream.getAudioTracks().forEach(t => t.enabled = !t.enabled)
     setIsAudioOn(prev => !prev)
   }
+
   return(
     <StyledContent.RTC>
       <header>v0.3 RTC room {name}</header>
@@ -241,7 +242,6 @@ export default function RTC(){
         <button onClick={onoffAudio}>Audio {isAudioOn ? "On" : "Off"}</button>
       </footer>
       <section>
-        <button onClick={checkBothVideoTrack}>check both videoTrack</button>
 
       </section>
       <section>
