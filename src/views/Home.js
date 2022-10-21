@@ -149,7 +149,7 @@ export default function Home(){
   function changeMobileCamera(){
     const VT = mediaStream.getVideoTracks()[0]
     const VC = VT.getConstraints()
-    VC.facingMode === "user" ? "environment" : "user"
+    VC.facingMode = VC.facingMode === "user" ? "environment" : "user"
     console.log("change camera : ", VC)
     VT.applyConstraints(VC)
   }
