@@ -65,7 +65,9 @@ async function getMediaStream(deviceId = {}){
 }
 function getStringSize(str){
   return (function(str, b, i, c){
-    for(b = i = 0; c = str.charCodeAt(i++) ;b+=c >> 11 ? 3 : c >> 7 ? 2 : 1){};
+    for(b = i = 0; c = str.charCodeAt(i) ;b+=c >> 11 ? 3 : c >> 7 ? 2 : 1){
+      i++
+    };
     return b
   }(str))
 }
