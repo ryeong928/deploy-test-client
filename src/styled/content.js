@@ -57,6 +57,10 @@ const RTC = styled(Content)`
     justify-content: center;
     align-items: center;
   }
+  & > section{
+    display: flex;
+    gap: 10px;
+  }
 `
 const DataChannel = styled(Content)`
   & > main{

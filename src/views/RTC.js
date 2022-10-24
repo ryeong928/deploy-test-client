@@ -65,6 +65,21 @@ async function getMediaStream(deviceId = {}){
     console.log('getMediaStream err: ', err)
   }
 }
+function updateTrack(type){
+  if(type === "video"){
+    const videoTrack = mediaStream.getVideoTracks()[0]
+    const videoSender = PC.getSenders().find(s => s.track.kind === "video")
+    videoSender.replaceTrack(videoTrack)
+  }
+  if(type === "audio"){
+    const audioTrack = mediaStream.getAudioTracks()[0]
+    const audioSender = PC.getSenders().find(s => s.track.kind === "audio")
+    audioSender.replaceTrack(audioTrack)
+  }
+}
+function checkVideoTrack(){
+  console.log('video track constraints : ', mediaStream.getVideoTracks()[0].getConstraints())
+}
 function send(msg){
   ws.send(JSON.stringify(msg))
 }
@@ -182,9 +197,6 @@ export default function RTC(){
     }
   }, [name, props, getMedia, navigate, connect])
 
-  function checkVideoTrack(){
-    console.log('video track constraints : ', mediaStream.getVideoTracks()[0].getConstraints())
-  }
   async function changeResolution(){
     try{
       mediaStream?.getTracks().forEach(t => t.stop())
@@ -198,6 +210,8 @@ export default function RTC(){
       }
       mediaStream = await window.navigator.mediaDevices.getUserMedia(constraints)
       localRef.current.srcObject = mediaStream
+
+      updateTrack('video')
     }catch(err){
       console.log('changeResolution error: ', err)
     }
@@ -214,6 +228,8 @@ export default function RTC(){
       }
       mediaStream = await window.navigator.mediaDevices.getUserMedia(constraints)
       localRef.current.srcObject = mediaStream
+
+      updateTrack('video')
     }catch(err){
       console.log("changeChannel error: ", err)
     }
@@ -221,20 +237,12 @@ export default function RTC(){
   async function changeVideo(e){
     setCrtVideo(videos.find(v => v.deviceId === e.target.value))
     await getMedia({V: e.target.value})
-    if(true){
-        const videoTrack = mediaStream.getVideoTracks()[0]
-        const videoSender = PC.getSenders().find(s => s.track.kind === "video")
-        videoSender.replaceTrack(videoTrack)
-    }
+    updateTrack('video')
   }
   async function changeAudio(e){
     setCrtAudio(audios.find(a => a.deviceId === e.target.value))
     await getMedia({A: e.target.value})
-    if(true){
-      const audioTrack = mediaStream.getAudioTracks()[0]
-      const audioSender = PC.getSenders().find(s => s.track.kind === "audio")
-      audioSender.replaceTrack(audioTrack)
-    }
+    updateTrack('audio')
   }
   function onoffVideo(){
     mediaStream.getVideoTracks().forEach(track => track.enabled = !track.enabled)
