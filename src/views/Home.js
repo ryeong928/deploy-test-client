@@ -38,9 +38,9 @@ async function getMediaStream(deviceId = {}){
     const {V, A} = deviceId
     const constraints = {
       video: {
-        facingMode: "environment",
-        width: {max: 300},
-        height: {max: 300}
+        facingMode: "user",
+        width: {exact: 160},
+        height: {exact: 120}
       }, 
       audio: A ? {deviceId: {exact: A}} : true
     }
@@ -74,14 +74,14 @@ export default function Home(){
     try{
       // 사용중이던 장치 사용 중지
       mediaStream?.getTracks().forEach(t => t.stop())
+      // 카메라/오디오 입출력 연결
+      mediaStream = await getMediaStream(deviceId)
+      localRef.current.srcObject = mediaStream
       // 사용 가능한 입력 장치 리스트
       getDevices().then(res => {
         setVideos(res.videos)
         setAudios(res.audios)
       })
-      // 카메라/오디오 입출력 연결
-      mediaStream = await getMediaStream(deviceId)
-      localRef.current.srcObject = mediaStream
       // 현재 사용중인 카메라/오디오
       setCrtVideo(mediaStream.getVideoTracks()[0])
       setCrtAudio(mediaStream.getAudioTracks()[0])
@@ -112,11 +112,7 @@ export default function Home(){
     Promise.resolve(true)
     .then(() => getMedia())
     .then(() => connect())
-    .then(() => {
-      PC.createOffer().then(offer => {
-        setSDP(offer)
-      })
-    })
+    .then(() => PC.createOffer().then(setSDP))
     return () => stop()
   }, [getMedia, connect, stop])
 
@@ -136,6 +132,28 @@ export default function Home(){
     mediaStream.getAudioTracks().forEach(t => t.enabled = !t.enabled)
     setIsAudioOn(prev => !prev)
   }
+  async function changeResolution(){
+    mediaStream?.getTracks().forEach(t => t.stop())
+
+    const VC = crtVideo.getConstraints()
+    VC.width.exact = VC.width.exact === 640 ? 160 : 640
+    VC.height.exact = VC.height.exact === 480 ? 120 : 480
+    const constraints = {
+      video: VC,
+      audio: true
+    }
+    mediaStream = await window.navigator.mediaDevices.getUserMedia(constraints)
+    localRef.current.srcObject = mediaStream
+    console.log('변경된 VC: ', mediaStream?.getVideoTracks()[0].getConstraints())
+
+    getDevices().then(res => {
+      setVideos(res.videos)
+      setAudios(res.audios)
+    })
+    setCrtVideo(mediaStream.getVideoTracks()[0])
+    setCrtAudio(mediaStream.getAudioTracks()[0])
+  }
+
   function enterRoom(e, type){
     if(type === "create") return navigate(`rtc/${rommNameRef.current.value}`, {state: rommNameRef.current.value})
     if(type === "join") return navigate(`rtc/${e.target.textContent}`, {state: e.target.textContent})
@@ -144,15 +162,12 @@ export default function Home(){
     axios.get('/rooms').then(res => setRooms(res.data)).catch(err => console.log(err))
   }
   function checkVideoTrack(){
-    console.log('video track : ', [crtVideo.getConstraints(), crtVideo.getSettings()])
+    console.log('VT Constraints from crtVideo : ', [crtVideo.getConstraints(), crtVideo.getSettings(), mediaStream.getVideoTracks()[0].getConstraints()])
   }
-  function changeMobileCamera(){
+  function changeChannel(){
     const VT = mediaStream.getVideoTracks()[0]
     const VC = VT.getConstraints()
     VC.facingMode = VC.facingMode === "user" ? "environment" : "user"
-    VC.width.max = VC.width.max === 500 ? 1000 : 500
-    VC.height.max = VC.height.max === 500 ? 1000 : 500
-    console.log("change camera : ", VC)
     VT.applyConstraints(VC)
   }
   return(
@@ -178,8 +193,11 @@ export default function Home(){
         <button onClick={onoffAudio}>Audio {isAudioOn ? "On" : "Off"}</button>
       </section>
       <section>
-        <button onClick={checkVideoTrack}>VideoTrack</button>
-        <button onClick={changeMobileCamera}>Change Mobile Camera</button>
+        <button onClick={changeResolution}>Change Resolution</button>
+        <button onClick={changeChannel}>Change Channel</button>
+      </section>
+      <section>
+        <button onClick={checkVideoTrack}>Check Constraints</button>
       </section>
       {SDP && (
         <footer>
