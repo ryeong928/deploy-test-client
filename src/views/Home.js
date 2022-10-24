@@ -49,7 +49,6 @@ export default function Home(){
   const localRef = useRef(null)
   const [videos, setVideos] = useState([])
   const [audios, setAudios] = useState([])
-  const [crtVideo, setCrtVideo] = useState('')
   const [isVideoOn, setIsVideoOn] = useState(true)
   const [isAudioOn, setIsAudioOn] = useState(true)
   const navigate = useNavigate()
@@ -72,8 +71,6 @@ export default function Home(){
         setAudios(res.audios)
       })
       // 현재 사용중인 카메라/오디오
-      setCrtVideo(mediaStream.getVideoTracks()[0])
-      setCrtAudio(mediaStream.getAudioTracks()[0])
     }catch(err){
       console.log(err)
     }
@@ -130,8 +127,6 @@ export default function Home(){
       setVideos(res.videos)
       setAudios(res.audios)
     })
-    setCrtVideo(mediaStream.getVideoTracks()[0])
-    setCrtAudio(mediaStream.getAudioTracks()[0])
   }
   async function changeChannel(){
     mediaStream?.getTracks().forEach(t => t.stop())
@@ -149,8 +144,7 @@ export default function Home(){
       setVideos(res.videos)
       setAudios(res.audios)
     })
-    setCrtVideo(mediaStream.getVideoTracks()[0])
-    setCrtAudio(mediaStream.getAudioTracks()[0])
+
   }
 
   function enterRoom(e, type){
