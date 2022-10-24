@@ -3,17 +3,6 @@ import { useNavigate } from "react-router-dom"
 import StyledContent from '../styled/content'
 import axios from "../api"
 
-/*
-  0. /room/name/user/id get 요청으로 인해 서버에서 무슨 동작을 하는지??
-
-  1. 웹소켓 연결
-
-  2. send({from: id, type: join, data: name})
-
-  3. onmessage data false | true
-
-  4. true => create offer
-*/
 let mediaStream
 let PC
 // 현재 사용가능한 input devices 리스트를 반환한다
@@ -51,6 +40,7 @@ async function getMediaStream(deviceId = {}){
     console.log('getMediaStream err: ', err)
   }
 }
+// 문자열 데이터 byte 사이즈 
 function getStringSize(str){
   return new Blob([str]).size
 }
@@ -60,7 +50,6 @@ export default function Home(){
   const [videos, setVideos] = useState([])
   const [audios, setAudios] = useState([])
   const [crtVideo, setCrtVideo] = useState('')
-  const [crtAudio, setCrtAudio] = useState('')
   const [isVideoOn, setIsVideoOn] = useState(true)
   const [isAudioOn, setIsAudioOn] = useState(true)
   const navigate = useNavigate()
@@ -116,14 +105,6 @@ export default function Home(){
     return () => stop()
   }, [getMedia, connect, stop])
 
-  async function changeVideo(e){
-    setCrtVideo(videos.find(v => v.deviceId === e.target.value))
-    await getMedia({V: e.target.value})
-  }
-  async function changeAudio(e){
-    setCrtAudio(audios.find(a => a.deviceId === e.target.value))
-    await getMedia({A: e.target.value})
-  }
   function onoffVideo(){
     mediaStream.getVideoTracks().forEach(track => track.enabled = !track.enabled)
     setIsVideoOn(prev => !prev)
@@ -183,6 +164,9 @@ export default function Home(){
     console.log('VT Constraints from crtVideo : ', [crtVideo.getConstraints(), crtVideo.getSettings(), mediaStream.getVideoTracks()[0].getConstraints()])
   }
 
+  if(false){
+    console.log([videos, audios])
+  }
   return(
     <StyledContent.Home>
       <header>Home</header>
@@ -193,14 +177,6 @@ export default function Home(){
         <button onClick={(e) => enterRoom(e, 'create')}>enter</button>
       </section>
       <video ref={localRef} autoPlay controls width={500} height={500}/>
-      <section>
-        <select onChange={changeVideo}>
-          {videos.map(v => (<option key={v.deviceId} value={v.deviceId} selected={v.label === crtVideo.label}>{v.label}</option>))}
-        </select>
-        <select onChange={changeAudio}>
-          {audios.map(a => (<option key={a.deviceId} value={a.deviceId} selected={a.label === crtAudio.label}>{a.label}</option>))}
-        </select>
-      </section>
       <section>
         <button onClick={onoffVideo}>Camera {isVideoOn ? "On" : "Off"}</button>
         <button onClick={onoffAudio}>Audio {isAudioOn ? "On" : "Off"}</button>
