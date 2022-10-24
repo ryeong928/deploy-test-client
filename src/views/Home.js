@@ -144,7 +144,6 @@ export default function Home(){
       setVideos(res.videos)
       setAudios(res.audios)
     })
-
   }
 
   function enterRoom(e, type){
@@ -191,10 +190,3 @@ export default function Home(){
     </StyledContent.Home>
   )
 }
-/*
-
-  window.navigator.mediaDevices
-    .enumerateDevices() : 연결된 I/O devices의 MediaDeviceInfo 배열을 반환한다
-    .getUserMedia() : 유저 허락을 받아 비디오/음성 device를 키고, 각 input device의 MediaStream을 반환한다
-
-*/
