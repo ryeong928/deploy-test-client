@@ -78,7 +78,7 @@ function updateTrack(type){
   }
 }
 function checkVideoTrack(){
-  console.log('video track constraints : ', mediaStream.getVideoTracks()[0].getConstraints())
+  console.log('video track constraints : ', [mediaStream.getVideoTracks()[0].getConstraints(), mediaStream.getVideoTracks()[0].getSettings()])
 }
 function send(msg){
   ws.send(JSON.stringify(msg))
@@ -309,13 +309,13 @@ export default function RTC(){
     .getUserMedia() : 유저 허락을 받아 비디오/음성 mediaStreamTrack으로 구성된 새로운 mediaStream을 반환한다
 
 
-  ★★★ MediaTrackConstraints
+  ★★★ MediaTrackConstraints, MediaTrackSettings
   (video track)
     .width
     .height
     .aspectRatio
-    .frameRate
     .facingMode
+    .frameRate : how many frames of video per second. If the value can't be determined for any reason, the value will match the vertical sync rate of the device the user agent is running on
 
 
   ★★★ MediaStream
