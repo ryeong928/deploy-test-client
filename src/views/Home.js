@@ -144,7 +144,25 @@ export default function Home(){
     }
     mediaStream = await window.navigator.mediaDevices.getUserMedia(constraints)
     localRef.current.srcObject = mediaStream
-    console.log('변경된 VC: ', mediaStream?.getVideoTracks()[0].getConstraints())
+
+    getDevices().then(res => {
+      setVideos(res.videos)
+      setAudios(res.audios)
+    })
+    setCrtVideo(mediaStream.getVideoTracks()[0])
+    setCrtAudio(mediaStream.getAudioTracks()[0])
+  }
+  async function changeChannel(){
+    mediaStream?.getTracks().forEach(t => t.stop())
+
+    const VC = crtVideo.getConstraints()
+    VC.facingMode = VC.facingMode === "user" ? "environment" : "user"
+    const constraints = {
+      video: VC,
+      audio: true
+    }
+    mediaStream = await window.navigator.mediaDevices.getUserMedia(constraints)
+    localRef.current.srcObject = mediaStream
 
     getDevices().then(res => {
       setVideos(res.videos)
@@ -164,12 +182,7 @@ export default function Home(){
   function checkVideoTrack(){
     console.log('VT Constraints from crtVideo : ', [crtVideo.getConstraints(), crtVideo.getSettings(), mediaStream.getVideoTracks()[0].getConstraints()])
   }
-  function changeChannel(){
-    const VT = mediaStream.getVideoTracks()[0]
-    const VC = VT.getConstraints()
-    VC.facingMode = VC.facingMode === "user" ? "environment" : "user"
-    VT.applyConstraints(VC)
-  }
+
   return(
     <StyledContent.Home>
       <header>Home</header>
