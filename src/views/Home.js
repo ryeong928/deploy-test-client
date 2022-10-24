@@ -113,7 +113,7 @@ export default function Home(){
   async function changeResolution(){
     mediaStream?.getTracks().forEach(t => t.stop())
 
-    const VC = crtVideo.getConstraints()
+    const VC = mediaStream.getVideoTracks()[0].getConstraints()
     VC.width.exact = VC.width.exact === 640 ? 160 : 640
     VC.height.exact = VC.height.exact === 480 ? 120 : 480
     const constraints = {
@@ -131,7 +131,7 @@ export default function Home(){
   async function changeChannel(){
     mediaStream?.getTracks().forEach(t => t.stop())
 
-    const VC = crtVideo.getConstraints()
+    const VC = mediaStream.getVideoTracks()[0].getConstraints()
     VC.facingMode = VC.facingMode === "user" ? "environment" : "user"
     const constraints = {
       video: VC,
@@ -155,7 +155,7 @@ export default function Home(){
     axios.get('/rooms').then(res => setRooms(res.data)).catch(err => console.log(err))
   }
   function checkVideoTrack(){
-    console.log('VT Constraints from crtVideo : ', [crtVideo.getConstraints(), crtVideo.getSettings(), mediaStream.getVideoTracks()[0].getConstraints()])
+    console.log('video track constraints : ', mediaStream.getVideoTracks()[0].getConstraints())
   }
 
   if(false){
