@@ -159,7 +159,6 @@ export default function Home(){
   if(false){
     console.log([videos, audios])
   }
-  console.log(rotate ? 'video-rotate' : '')
   return(
     <StyledContent.Home>
       <header>Home</header>

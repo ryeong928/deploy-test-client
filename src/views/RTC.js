@@ -314,8 +314,8 @@ export default function RTC(){
     <StyledContent.RTC>
       <header>v0.3 RTC room {name}</header>
       <main>
-        <video className={rotateLocal ? 'video-rotate' : ''} ref={localRef} autoPlay controls/>
-        <video className={rotateRemote ? 'video-rotate' : ''} ref={remoteRef} autoPlay controls/>
+        <video className={rotateLocal ? 'rotate' : ''} ref={localRef} autoPlay controls/>
+        <video className={rotateRemote ? 'rotate' : ''} ref={remoteRef} autoPlay controls/>
       </main>
 
       <section>
