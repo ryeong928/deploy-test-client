@@ -1,14 +1,5 @@
 import styled from "styled-components";
 
-async function genColor(){
-  const C = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
-  function genC(){
-    return new Promise(res => res(C[Math.round(Math.random() * (C.length - 1))]))
-  }
-  const arrC = await Promise.all([genC(), genC(), genC(), genC(), genC(), genC()])
-  return `#${arrC.join('')}`
-}
-
 const PercentBarContainer = styled.ul`
   border: 1px solid gray;
   padding: 10px;
@@ -77,8 +68,8 @@ export default function PercentBar({list}){
   const keys = Object.keys(list)
   const values = Object.values(list).sort((a, b) => {
     if(a>b) return -1
-    if(a===b) return 0
     if(a<b) return 1
+    return 0
   })
   const sum = values.reduce((a, c) => a + c, 0)
   const percents = values.map(v => {
