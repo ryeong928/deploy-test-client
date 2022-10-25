@@ -26,6 +26,9 @@ const iceServers = [
     credential: "openrelayproject",
   },
 ]
+if(false){
+  console.log(PC, timer, iceServers)
+}
 async function getMediaStream(deviceId = {}){
   try{
     const {V, A} = deviceId
@@ -90,7 +93,7 @@ export default function Broadcast(){
     })
     send({type: 'broadcast', data: 'join'})
 
-  }, [getMedia, connect])
+  }, [getMedia, connect, navigate])
 
   return(
     <StyledContent.Broadcast>
