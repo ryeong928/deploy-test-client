@@ -13,6 +13,16 @@ padding: 20px;
 }
 `
 const Home = styled(Content)`
+& > aside{
+  padding: 10px 20px;
+  background-color: limegreen;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  &:hover{
+    background-color: green;
+  }
+}
 & video.video-rotate{
   transform: rotateY(180deg);
 }
@@ -68,14 +78,26 @@ const RTC = styled(Content)`
     gap: 10px;
   }
 `
-const DataChannel = styled(Content)`
-  & > main{
-    
+const Broadcast = styled(Content)`
+  & > section{
+    display: flex;
+    gap: 10px;
+  }
+  & button{
+    font-size: 16px;
+    padding: 5px;
+    cursor: pointer;
+  }
+  & video{
+    &.rotate{
+      transform: rotateY(180deg);
+    }
   }
 `
+
 const StyledContent = {
   Home,
   RTC,
-  DataChannel,
+  Broadcast
 }
 export default StyledContent

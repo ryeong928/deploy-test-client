@@ -64,6 +64,7 @@ async function getMediaStream(deviceId = {}){
     return await window.navigator.mediaDevices.getUserMedia(constraints)
   }catch(err){
     console.log('getMediaStream err: ', err)
+    return undefined
   }
 }
 function updateTrack(type){
@@ -139,16 +140,23 @@ export default function RTC(){
   const [rotateRemote, setRotateRemote] = useState(false)
 
   const getMedia = useCallback(async function (deviceId = {}){
-    mediaStream?.getTracks().forEach(t => t.stop())
-    mediaStream = await getMediaStream(deviceId)
-    localRef.current.srcObject = mediaStream
-
-    getDevices().then(res => {
-      setVideos(res.videos)
-      setAudios(res.audios)
-      setCrtVideo(mediaStream.getVideoTracks()[0])
-      setCrtAudio(mediaStream.getAudioTracks()[0])
-    })
+    try{
+      mediaStream?.getTracks().forEach(t => t.stop())
+      mediaStream = await getMediaStream(deviceId)
+      localRef.current.srcObject = mediaStream
+  
+      getDevices().then(res => {
+        setVideos(res.videos)
+        setAudios(res.audios)
+        setCrtVideo(mediaStream.getVideoTracks()[0])
+        setCrtAudio(mediaStream.getAudioTracks()[0])
+      })
+    }catch(err){
+      console.log('getMedia error: ', err)
+      return undefined
+    }finally{
+      console.log('mediaStream : ', mediaStream)
+    }
   }, [])
 
   const connect = useCallback(() => {
@@ -161,7 +169,7 @@ export default function RTC(){
       console.log("remote track added")
       remoteRef.current.srcObject = e.streams[0]
     })
-    mediaStream.getTracks().forEach(t => PC.addTrack(t, mediaStream))
+    mediaStream?.getTracks().forEach(t => PC.addTrack(t, mediaStream))
   }, [])
 
   useEffect(() => {

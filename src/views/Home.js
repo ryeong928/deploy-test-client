@@ -56,7 +56,6 @@ export default function Home(){
   const rommNameRef = useRef(null)
   const [rooms, setRooms] = useState([])
   const [rotate, setRotate] = useState(false)
-
   const [SDP, setSDP] = useState()
 
   const getMedia = useCallback(async function (deviceId = {}){
@@ -190,3 +189,6 @@ export default function Home(){
     </StyledContent.Home>
   )
 }
+
+// <aside onClick={() => navigate('/broadcast')}>Broadcast</aside>
+// 
