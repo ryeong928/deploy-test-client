@@ -18,7 +18,6 @@ async function getDevices(){
     return {videos, audios}
   }catch(err){
     console.log("getDevices err: ", err)
-    window.alert("getDevices err")
   }
 }
 // 나의 mediaStream를 반환한다
@@ -34,11 +33,13 @@ async function getMediaStream(deviceId = {}){
       audio: A ? {deviceId: {exact: A}} : true
     }
     if(V) constraints.video.deviceId = {exact: V}
-    console.log("constraints: ", constraints)
     return await window.navigator.mediaDevices.getUserMedia(constraints)
   }catch(err){
     console.log('getMediaStream err: ', err)
   }
+}
+function checkVideoTrack(){
+  console.log('video track constraints : ', [mediaStream.getVideoTracks()[0].getConstraints(), mediaStream.getVideoTracks()[0].getSettings()])
 }
 // 문자열 데이터 byte 사이즈 
 function getStringSize(str){
@@ -46,12 +47,12 @@ function getStringSize(str){
 }
 
 export default function Home(){
+  const navigate = useNavigate()
   const localRef = useRef(null)
   const [videos, setVideos] = useState([])
   const [audios, setAudios] = useState([])
   const [isVideoOn, setIsVideoOn] = useState(true)
   const [isAudioOn, setIsAudioOn] = useState(true)
-  const navigate = useNavigate()
   const rommNameRef = useRef(null)
   const [rooms, setRooms] = useState([])
 
@@ -153,9 +154,6 @@ export default function Home(){
   function getRooms(){
     axios.get('/rooms').then(res => setRooms(res.data)).catch(err => console.log(err))
   }
-  function checkVideoTrack(){
-    console.log('video track constraints : ', mediaStream.getVideoTracks()[0].getConstraints())
-  }
 
   if(false){
     console.log([videos, audios])
@@ -179,7 +177,7 @@ export default function Home(){
         <button onClick={changeChannel}>Change Channel</button>
       </section>
       <section>
-        <button onClick={checkVideoTrack}>Check Constraints</button>
+        <button onClick={checkVideoTrack}>Check Constraints/Settings</button>
       </section>
       {SDP && (
         <footer>

@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import StyledContent from "../styled/content";
 import { ws } from '../App'
 
 let mediaStream
 let PC
+let timer
 const iceServers = [
   {
     urls: "stun:openrelay.metered.ca:80",
@@ -77,8 +78,29 @@ function updateTrack(type){
     audioSender.replaceTrack(audioTrack)
   }
 }
+async function checkStats(){
+  try{
+    if(!PC) return
+    const start = await PC.getStats()
+    await new Promise(res => setTimeout(res, 3000))
+    const end = await PC.getStats()
+    let bytesSent = 0
+    let packetsSent = 0
+    for(const stats of end.values()){
+      if(stats.type !== 'outbound-rtp') continue
+      const base = start.get(stats.id)
+      if(!base) continue
+      bytesSent += stats.bytesSent - base.bytesSent
+      packetsSent += stats.packetsSent - base.packetsSent
+    }
+    return {bytesSent, packetsSent}
+  }catch(err){
+    console.log("check stats error : ", err)
+  }
+}
 function checkVideoTrack(){
-  console.log('video track constraints : ', [mediaStream.getVideoTracks()[0].getConstraints(), mediaStream.getVideoTracks()[0].getSettings()])
+  console.log('constraints: ', mediaStream.getVideoTracks()[0].getConstraints())
+  console.log('settings: ', mediaStream.getVideoTracks()[0].getSettings())
 }
 function send(msg){
   ws.send(JSON.stringify(msg))
@@ -86,6 +108,9 @@ function send(msg){
 function getStringSize(str){
   return new Blob([str]).size
 }
+
+
+
 export default function RTC(){
   const navigate = useNavigate()
   const {name} = useParams()
@@ -107,6 +132,8 @@ export default function RTC(){
   const [isOffer, setIsOffer] = useState(false)
   const [ANSWER, setANSWER] = useState()
   const [isAnswer, setIsAnswer] = useState(false)
+  // network outbound-rtp amount
+  const [sentDataAmount, setSentDataAmount] = useState(undefined)
 
   const getMedia = useCallback(async function (deviceId = {}){
     mediaStream?.getTracks().forEach(t => t.stop())
@@ -159,6 +186,10 @@ export default function RTC(){
         console.log("the other left")
         // 상대방 정보 삭제 로직 필요
       }
+      if(type === "peercontrol"){
+        if(data === "resolution") return changeResolution()
+        if(data === "channel") return changeChannel()
+      }
       // 시그널링
       if(type === "offer"){
         console.log("get offer")
@@ -190,6 +221,7 @@ export default function RTC(){
 
     return () => {
       send({type: 'leave', data: name})
+      if(timer) clearInterval(timer)
       mediaStream?.getTracks().forEach(t => t.stop())
       mediaStream = null
       PC?.close()
@@ -197,6 +229,17 @@ export default function RTC(){
     }
   }, [name, props, getMedia, navigate, connect])
 
+  const checkDataAmout = useCallback(() => {
+    if(timer) clearInterval(timer)
+    else {
+      async function getData(){
+        const data = await checkStats()
+        setSentDataAmount(data)
+      }
+      getData()
+      timer = setInterval(getData, 3000)
+    } 
+  }, []) 
   async function changeResolution(){
     try{
       mediaStream?.getTracks().forEach(t => t.stop())
@@ -252,8 +295,12 @@ export default function RTC(){
     mediaStream.getAudioTracks().forEach(t => t.enabled = !t.enabled)
     setIsAudioOn(prev => !prev)
   }
+  function changePeer(e){
+    const {type} = e.currentTarget.dataset
+    if(!type) return
+    send({type: 'peercontrol', data: type})
+  }
 
-  console.log('mediaStream : ', mediaStream)
   return(
     <StyledContent.RTC>
       <header>v0.3 RTC room {name}</header>
@@ -261,6 +308,7 @@ export default function RTC(){
         <video ref={localRef} autoPlay controls/>
         <video ref={remoteRef} autoPlay controls/>
       </main>
+
       <section>
         <select onChange={changeVideo}>
           {videos.map(v => (<option key={v.deviceId} value={v.deviceId} selected={v.label === crtVideo.label}>{v.label}</option>))}
@@ -269,18 +317,25 @@ export default function RTC(){
           {audios.map(a => (<option key={a.deviceId} value={a.deviceId} selected={a.label === crtAudio.label}>{a.label}</option>))}
         </select>
       </section>
+
       <section>
-        <button onClick={checkVideoTrack}>Check VideoTrack</button>
         <button onClick={changeResolution}>Change Resolution</button>
         <button onClick={changeChannel}>Change Channel</button>
-      </section>
-      <footer>
         <button onClick={onoffVideo}>Camera {isVideoOn ? "On" : "Off"}</button>
         <button onClick={onoffAudio}>Audio {isAudioOn ? "On" : "Off"}</button>
-      </footer>
-      <section>
-
       </section>
+
+      <section>
+        <button data-type="resolution" onClick={changePeer}>Change Peer Resolution</button>
+        <button data-type="channel" onClick={changePeer}>Change Peer Channel</button>
+      </section>
+
+      <section>
+        <button onClick={checkVideoTrack}>check Video Track</button>
+        <button onClick={checkDataAmout}>check sent data amount</button>
+        {sentDataAmount && Object.keys(sentDataAmount).map(v => <div key={v}>{v}: {sentDataAmount[v]}</div>)}
+      </section>
+
       <section>
         {OFFER && (<>
           <h4>{OFFER.type}: {getStringSize(JSON.stringify(OFFER))}Bytes</h4>
@@ -336,6 +391,26 @@ export default function RTC(){
     C.facingMode = C.facingMode === "user" ? "environment" : "user"
     videoTrack.applyConstraints(C)
   }
+
+
+  ★★★ RTCPeerConnection
+    .getStats() : 온갖 stats에 대한 정보를 RTCStatsReport Map으로 반환한다
+    .getSenders() : 연결된 MediaStreamTrack에 해당하는 RTCRtpSender 객체들로 이루어진 배열을 반환한다
+
+
+  ★★★ RTCRtpSender : 상대방에게 전달되는 특정 MediaStreamTrack 어떻게 encoded 되고 sent 되는지에 대한 정보를 갖고 있으며, 이에 대한 제어권을 제공하는 객체
+    .replaceTrack() : renegotiation 없이, 현재 RTCRtpSender에 의해 전달되고 있는 track을 다른 track으로 교체한다
+    .getStats() : 해당 RTCRtpSender에 의해 외부로 스트리밍되는 정보에 관한 모든 statistics data를 갖는 RTCStatsReport를 value로 가진 Promise를 반환한다
+
+
+  ★★★ RTCStatsReport
+  - a Map object returned by RTCPeerConnection/RTCRtpReceiver/RTCRtpSender.getStats()
+  - a Map object between RTCStats.id and corresponding RTCStats dictionary
+  
+
+  ★★★ RTCStats
+  - default attributes : timestamp, type, id
+  - 
 
 
   ★★★ SDP(Session Description Protocol, offer/answer) : 사용자의 미디어와 네트워크에 관한 정보

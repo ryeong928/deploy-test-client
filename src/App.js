@@ -5,6 +5,7 @@ import { useEffect } from 'react'
 import axios from './api'
 import createSocket from './socket'
 import RTC from './views/RTC'
+import Test from './views/Test'
 export const ws = createSocket()
 
 function Router(){
@@ -13,6 +14,7 @@ function Router(){
       <Route path="/" element={<Layout />}>
         <Route index element={<Home />} />
         <Route path="rtc/:name" element={<RTC />} />
+        <Route path="test" element={<Test />} />
       </Route>
     </Routes>
   )
