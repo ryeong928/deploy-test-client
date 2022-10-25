@@ -86,15 +86,25 @@ async function checkStats(){
     await new Promise(res => setTimeout(res, 3000))
     const end = await PC.getStats()
     let bytesSent = 0
+    let bytesReceived = 0
     let packetsSent = 0
+    let packetsReceived = 0
+
     for(const stats of end.values()){
-      if(stats.type !== 'outbound-rtp') continue
-      const base = start.get(stats.id)
-      if(!base) continue
-      bytesSent += stats.bytesSent - base.bytesSent
-      packetsSent += stats.packetsSent - base.packetsSent
+      if(stats.type === 'outbound-rtp'){
+        const base = start.get(stats.id)
+        if(!base) continue
+        bytesSent += stats.bytesSent - base.bytesSent
+        packetsSent += stats.packetsSent - base.packetsSent
+      }
+      if(stats.type === 'inbound-rtp'){
+        const base = start.get(stats.id)
+        if(!base) continue
+        bytesReceived += stats.bytesReceived - base.bytesReceived
+        packetsReceived += stats.packetsReceived - base.packetsReceived
+      }
     }
-    return {bytesSent, packetsSent}
+    return {bytesSent, packetsSent, bytesReceived, packetsReceived}
   }catch(err){
     console.log("check stats error : ", err)
   }
@@ -134,7 +144,7 @@ export default function RTC(){
   const [ANSWER, setANSWER] = useState()
   const [isAnswer, setIsAnswer] = useState(false)
   // network outbound-rtp amount
-  const [sentDataAmount, setSentDataAmount] = useState(undefined)
+  const [DataAmount, setDataAmount] = useState(undefined)
   // rotate video view
   const [rotateLocal, setRotateLocal] = useState(false)
   const [rotateRemote, setRotateRemote] = useState(false)
@@ -233,10 +243,8 @@ export default function RTC(){
     return () => {
       send({type: 'leave', data: name})
       if(timer) clearInterval(timer)
-      mediaStream?.getTracks().forEach(t => t.stop())
-      mediaStream = null
-      PC?.close()
-      PC = null
+      mediaStream ? mediaStream.getTracks().forEach(t => t.stop()) : mediaStream = null
+      PC ? PC.close() : PC = null
     }
   }, [name, props, getMedia, navigate, connect])
 
@@ -245,7 +253,7 @@ export default function RTC(){
     else {
       async function getData(){
         const data = await checkStats()
-        setSentDataAmount(data)
+        setDataAmount(data)
       }
       getData()
       timer = setInterval(getData, 3000)
@@ -253,7 +261,8 @@ export default function RTC(){
   }, []) 
   async function changeResolution(){
     try{
-      mediaStream?.getTracks().forEach(t => t.stop())
+      if(!mediaStream) return window.alert("연결된 장치가 없습니다")
+      mediaStream.getTracks().forEach(t => t.stop())
   
       const VC = mediaStream.getVideoTracks()[0].getConstraints()
       VC.width.exact = VC.width.exact === 640 ? 160 : 640
@@ -272,7 +281,8 @@ export default function RTC(){
   }
   async function changeChannel(){
     try{
-      mediaStream?.getTracks().forEach(t => t.stop())
+      if(!mediaStream) return window.alert("연결된 장치가 없습니다")
+      mediaStream.getTracks().forEach(t => t.stop())
   
       const VC = mediaStream.getVideoTracks()[0].getConstraints()
       VC.facingMode = VC.facingMode === "user" ? "environment" : "user"
@@ -289,20 +299,24 @@ export default function RTC(){
     }
   }
   async function changeVideo(e){
+    if(!mediaStream) return window.alert("연결된 장치가 없습니다")
     setCrtVideo(videos.find(v => v.deviceId === e.target.value))
     await getMedia({V: e.target.value})
     updateTrack('video')
   }
   async function changeAudio(e){
+    if(!mediaStream) return window.alert("연결된 장치가 없습니다")
     setCrtAudio(audios.find(a => a.deviceId === e.target.value))
     await getMedia({A: e.target.value})
     updateTrack('audio')
   }
   function onoffVideo(){
+    if(!mediaStream) return window.alert("연결된 장치가 없습니다")
     mediaStream.getVideoTracks().forEach(track => track.enabled = !track.enabled)
     setIsVideoOn(prev => !prev)
   }
   function onoffAudio(){
+    if(!mediaStream) return window.alert("연결된 장치가 없습니다")
     mediaStream.getAudioTracks().forEach(t => t.enabled = !t.enabled)
     setIsAudioOn(prev => !prev)
   }
@@ -352,7 +366,7 @@ export default function RTC(){
       <section>
         <button onClick={checkVideoTrack}>check Video Track</button>
         <button onClick={checkDataAmout}>check sent data amount</button>
-        {sentDataAmount && Object.keys(sentDataAmount).map(v => <div key={v}>{v}: {sentDataAmount[v]}</div>)}
+        {DataAmount && Object.keys(DataAmount).map(v => <div key={v}>{v}: {DataAmount[v]}</div>)}
       </section>
 
       <section>
