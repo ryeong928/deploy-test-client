@@ -13,6 +13,9 @@ padding: 20px;
 }
 `
 const Home = styled(Content)`
+& video.video-rotate{
+  transform: rotateY(180deg);
+}
 & > section{
   display: flex;
   gap: 20px;
@@ -43,6 +46,9 @@ const RTC = styled(Content)`
       width: 400px;
       height: 300px;
       background-color: silver;
+      &.rotate{
+        transform: rotateY(180deg);
+      }
     }
   }
   & > footer{

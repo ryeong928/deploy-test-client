@@ -55,6 +55,7 @@ export default function Home(){
   const [isAudioOn, setIsAudioOn] = useState(true)
   const rommNameRef = useRef(null)
   const [rooms, setRooms] = useState([])
+  const [rotate, setRotate] = useState(false)
 
   const [SDP, setSDP] = useState()
 
@@ -158,6 +159,7 @@ export default function Home(){
   if(false){
     console.log([videos, audios])
   }
+  console.log(rotate ? 'video-rotate' : '')
   return(
     <StyledContent.Home>
       <header>Home</header>
@@ -167,7 +169,7 @@ export default function Home(){
         <input type="text" ref={rommNameRef} placeholder="room name" />
         <button onClick={(e) => enterRoom(e, 'create')}>enter</button>
       </section>
-      <video ref={localRef} autoPlay controls width={500} height={500}/>
+      <video className={rotate ? 'video-rotate' : ''} ref={localRef} autoPlay controls width={500} height={500}/>
       <section>
         <button onClick={onoffVideo}>Camera {isVideoOn ? "On" : "Off"}</button>
         <button onClick={onoffAudio}>Audio {isAudioOn ? "On" : "Off"}</button>
@@ -175,6 +177,7 @@ export default function Home(){
       <section>
         <button onClick={changeResolution}>Change Resolution</button>
         <button onClick={changeChannel}>Change Channel</button>
+        <button onClick={() => setRotate(prev => !prev)}>Rotate View</button>
       </section>
       <section>
         <button onClick={checkVideoTrack}>Check Constraints/Settings</button>

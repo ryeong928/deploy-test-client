@@ -134,6 +134,9 @@ export default function RTC(){
   const [isAnswer, setIsAnswer] = useState(false)
   // network outbound-rtp amount
   const [sentDataAmount, setSentDataAmount] = useState(undefined)
+  // rotate video view
+  const [rotateLocal, setRotateLocal] = useState(false)
+  const [rotateRemote, setRotateRemote] = useState(false)
 
   const getMedia = useCallback(async function (deviceId = {}){
     mediaStream?.getTracks().forEach(t => t.stop())
@@ -300,13 +303,19 @@ export default function RTC(){
     if(!type) return
     send({type: 'peercontrol', data: type})
   }
+  function rotateView(e){
+    const {type} = e.currentTarget.dataset
+    if(!type) return
+    if(type === "local") setRotateLocal(prev => !prev)
+    if(type === "remote") setRotateRemote(prev => !prev)
+  }
 
   return(
     <StyledContent.RTC>
       <header>v0.3 RTC room {name}</header>
       <main>
-        <video ref={localRef} autoPlay controls/>
-        <video ref={remoteRef} autoPlay controls/>
+        <video className={rotateLocal ? 'video-rotate' : ''} ref={localRef} autoPlay controls/>
+        <video className={rotateRemote ? 'video-rotate' : ''} ref={remoteRef} autoPlay controls/>
       </main>
 
       <section>
@@ -323,11 +332,13 @@ export default function RTC(){
         <button onClick={changeChannel}>Change Channel</button>
         <button onClick={onoffVideo}>Camera {isVideoOn ? "On" : "Off"}</button>
         <button onClick={onoffAudio}>Audio {isAudioOn ? "On" : "Off"}</button>
+        <button data-type="local" onClick={rotateView}>Rotate View</button>
       </section>
 
       <section>
         <button data-type="resolution" onClick={changePeer}>Change Peer Resolution</button>
         <button data-type="channel" onClick={changePeer}>Change Peer Channel</button>
+        <button data-type="remote" onClick={rotateView}>Rotate Peer View</button>
       </section>
 
       <section>
