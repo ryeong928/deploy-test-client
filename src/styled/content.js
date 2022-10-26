@@ -94,10 +94,15 @@ const Broadcast = styled(Content)`
     }
   }
 `
+const Datas = styled(Content)`
+  flex: 1;
+  background-color: gainsboro;
+`
 
 const StyledContent = {
   Home,
   RTC,
-  Broadcast
+  Broadcast,
+  Datas
 }
 export default StyledContent

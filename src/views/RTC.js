@@ -456,6 +456,20 @@ export default function RTC(){
 
   코덱 적용 우선순위 변경하기
     m=video 에서 H.264에 해당하는 프로파일번호를 맨 앞으로 변경하자
+
+  ★★★ WebRTC server
+  1. Signaling server
+  -peer간 연결을 위한 서버. 1:1에 적합
+  -peer간 연결이 된 후 부하가 없지만, 클라가 n:m 연결이 되면서 클라의 부하가 급격하게 증가
+
+  2. SFU(Selective Forwarding Unit) server
+  -peer간 미디어 트래픽을 중계하는 중앙 서버 방식. 1:N에 적합
+  -peer간 연결이 아닌, 서버와 peer간의 연결
+  -peer의 부하 일부를 서버가 책임
+
+  3. MCU
+  -다수의 송출 미디어를 중앙 서버에서 혼합/가공하여 수신측으로 전달하는 중앙 서버 방식. N:M에 적합
+  -peer의 부하가 현저히 줄어들지만, 중앙 서버의 부하가 급격히 늘어난다
 */
 
 /*

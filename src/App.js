@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import Layout from './views/Layout'
 import Home from './views/Home'
 import { useEffect } from 'react'
@@ -7,16 +7,18 @@ import createSocket from './socket'
 import RTC from './views/RTC'
 import Broadcast from './views/Broadcast'
 import Test from './views/Test'
+import Datas from './views/Datas'
 export const ws = createSocket()
 
 function Router(){
   return(
-    <Routes>
+    <Routes >
       <Route path="/" element={<Layout />}>
         <Route index element={<Home />} />
         <Route path="rtc/:name" element={<RTC />} />
         <Route path="broadcast" element={<Broadcast />} />
         <Route path="test" element={<Test />} />
+        <Route path="datas" element={<Datas />} />
       </Route>
     </Routes>
   )

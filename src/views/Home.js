@@ -46,6 +46,7 @@ function getStringSize(str){
   return new Blob([str]).size
 }
 
+
 export default function Home(){
   const navigate = useNavigate()
   const localRef = useRef(null)
