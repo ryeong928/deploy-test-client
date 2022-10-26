@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import Layout from './views/Layout'
 import Home from './views/Home'
 import { useEffect } from 'react'

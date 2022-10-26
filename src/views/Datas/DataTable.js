@@ -67,13 +67,13 @@ export default function DataTable({data, options}){
       } 
       return sort
     })
-  }, [])
+  }, [options.sorting.default, ])
 
   // 정렬 기준 변화에 따른 적용
   useEffect(() => {
-    if(!DATA || !DATA.length) return console.log("정렬할 데이터가 없습니다")
-    setDATA(sorting(DATA, SORT))
-  }, [SORT])
+    if(!data || !data.length) return console.log("정렬할 데이터가 없습니다")
+    setDATA(prev => sorting(prev, SORT))
+  }, [data, SORT])
 
   // 항목 클릭시, 데이터에서 해당 항목 찾기. 기준 : num
   function onClickItem (e) {
@@ -139,10 +139,8 @@ function sorting (array, sort) {
         if(A > B) return -1
         if(A === B) return 0
       }
-    }else{
-      if(order === "asc") return a[type] - b[type]
-      if(order === "des") return b[type] - a[type]
     }
+    return order === "asc" ? a[type] - b[type] : b[type] - a[type]
   })
 }
 function finding(array, finding, value){
