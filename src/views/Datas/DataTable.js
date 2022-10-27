@@ -88,6 +88,7 @@ const DataTableContainer = styled.div`
       outline: none;
       border: 1px solid gray;
       cursor: pointer;
+      background-color: transparent;
       &:hover{
         background-color: #333;
         color: white;
@@ -115,10 +116,10 @@ export default function DataTable({data, options}){
   // 초기 데이터
   const [DATA, setDATA] = useState(data)
   const HEADER = useRef(null)
-  const [SORT, setSORT] = useState({type: options.sorting.default, order: 'asc'})
+  const [SORT, setSORT] = useState({type: options.sorting, order: 'asc'})
   // options
   const findingRef = useRef(null)
-  const inputRef = useRef(null)
+  const searchingRef = useRef(null)
   const [selected, setSelected] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
 
@@ -141,12 +142,12 @@ export default function DataTable({data, options}){
       }
       else if(prev.order === 'asc') sort.order = 'des'
       else {
-        sort.type = options.sorting.default
+        sort.type = options.sorting
         sort.order = 'asc'
       } 
       return sort
     })
-  }, [options.sorting.default])
+  }, [options.sorting])
 
   // 정렬 기준 변화에 따른 적용
   useEffect(() => {
@@ -166,42 +167,44 @@ export default function DataTable({data, options}){
     if(selected.length === DATA.length) setSelected([])
     else setSelected(DATA)
   }
-
   // options.searching
   function onKeyDown(e){
     if(e.key === "Enter") onClickFinding()
   }
   function onClickFinding(){
-    if(!inputRef.current) return console.log('inputRef.current is null')
+    if(!searchingRef.current) return console.log('searchingRef.current is null')
     const array = sorting(data, SORT)
     const finding = findingRef.current
-    const value = inputRef.current.value
+    const value = searchingRef.current.value
     setDATA(searching(array, finding, value))
     // 리셋
     setSelected([])
+    setCurrentPage(1)
   }
+  function changeSearchingFinding(e){
+    searchingRef.current.value = ""
+    findingRef.current = e.target.value
+  }  
   // options.paginationing
   function changePage(e){
     const type = e.target?.dataset?.type
     const lastPage = Math.ceil(DATA.length / options.paginationing)
-    const currentPageIndex = Math.ceil(currentPage / 10)
-    const lastPageIndex = Math.ceil(lastPage / 10)
-    console.log(type, lastPage, currentPageIndex, lastPageIndex)
+    const currentPageIndex = Math.ceil(currentPage / options.paginationing)
+    const lastPageIndex = Math.ceil(lastPage / options.paginationing)
     if(!type) return
-    else if(type === 'prev') return currentPageIndex === 1 ? null : setCurrentPage(currentPage - 10)
-    else if(type === 'next') return currentPageIndex >= lastPageIndex ? null : setCurrentPage(prev => prev + 10 >= lastPage ? lastPage : prev + 10)
+    else if(type === 'prev') return currentPageIndex === 1 ? (currentPage === 1 ? null : setCurrentPage(currentPage - 1)) : setCurrentPage(currentPage - 10)
+    else if(type === 'next') return currentPageIndex >= lastPageIndex ? (currentPage === lastPage ? null : setCurrentPage(currentPage + 1)) : setCurrentPage(prev => prev + 10 >= lastPage ? lastPage : prev + 10)
     else setCurrentPage(Number(type))
   }
-  console.log(currentPage)
   return (
     <DataTableContainer>
       {!DATA ? <div>데이터가 없습니다</div> : (<>
         {options.searching && HEADER.current && (
           <header>
-            <select onChange={e => findingRef.current = e.target.value} defaultValue={HEADER.current[0]}>
+            <select onChange={changeSearchingFinding} defaultValue={HEADER.current[0]}>
               {HEADER.current.map((v, i) => <option key={`finding-option${i}`} value={v}>{v}</option>)}
             </select>
-            <input type="text" ref={inputRef} placeholder={'searching...'} onKeyDown={onKeyDown}/>
+            <input type="text" ref={searchingRef} placeholder={'searching...'} onKeyDown={onKeyDown}/>
             <button type="button" onClick={onClickFinding}>검색</button>
           </header>
         )}
@@ -282,8 +285,9 @@ function paginationing(array, count, page = 1){
 }
 function getPageCount(array, count, currentPage, pageCount){
   const lastPage = Math.ceil(array.length / count)
-  const difference = lastPage - currentPage
-  if(difference >= 10) return 10
-  const lastPageIndex = Math.ceil(lastPage / 10)
-  return lastPage - (lastPageIndex - 1) * pageCount 
+  const lastPageIndex = Math.ceil(lastPage / pageCount)
+  const currentPageIndex = Math.ceil(currentPage / pageCount)
+  const pageIndexDiff = lastPageIndex - currentPageIndex
+  if(pageIndexDiff > 0) return 10
+  return lastPage - (lastPageIndex - 1) * pageCount
 }

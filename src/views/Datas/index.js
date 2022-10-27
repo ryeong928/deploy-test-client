@@ -16,12 +16,11 @@ export default function Datas(){
 
   return(
     <StyledContent.Datas>
-      <DataTable data={data} options={
-        {
-          sorting: {default: 'num'}, 
+      <DataTable data={data} options={{
+          sorting: 'num', 
           searching: true,
           selecting: true,
-          paginationing: 10 
+          paginationing: 20 
         }} />
     </StyledContent.Datas>
   )
