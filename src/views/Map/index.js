@@ -1,6 +1,7 @@
 import { useState } from "react";
 import StyledContent from "../../styled/content";
-import { useJsApiLoader, GoogleMap, MarkerClusterer, Marker, InfoWindow, Circle, Polygon, Autocomplete, DirectionsRenderer, DrawingManager } from "@react-google-maps/api"
+import { useJsApiLoader, GoogleMap } from "@react-google-maps/api"
+// MarkerClusterer, Marker, InfoWindow, Circle, Polygon, Autocomplete, DirectionsRenderer, DrawingManager
 
 const libraries = ['places', 'drawing']
 
@@ -13,6 +14,7 @@ export default function Map(){
     region: "US",
   })
   const [map, setMap] = useState(null)
+  console.log(map)
   // 맵 loaded, unmounted, onClick
   const onLoad = (map) => {
     setMap(map)

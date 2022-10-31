@@ -149,6 +149,7 @@ async function checkStats(){
         packetsReceived += stats.packetsReceived - base.packetsReceived
       }
     }
+    if(false) console.log(packetsSent, packetsReceived)
     return {audioMimeType, videoMimeType, bytesSent, bytesReceived}
   }catch(err){
     console.log("check stats error : ", err)

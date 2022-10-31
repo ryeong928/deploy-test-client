@@ -5,7 +5,6 @@ import axios from "../api"
 
 let mediaStream
 let PC
-let TC
 // 현재 사용가능한 input devices 리스트를 반환한다
 async function getDevices(){
   try{
@@ -78,7 +77,6 @@ export default function Home(){
   const [rotate, setRotate] = useState(false)
   const [SDP, setSDP] = useState()
   const [capa, setCapa] = useState()
-  const [params, setParams] = useState()
 
   const getMedia = useCallback(async function (deviceId = {}){
     console.log("getMedia : ", deviceId.V, deviceId.A)
@@ -178,17 +176,6 @@ export default function Home(){
     videoCodecs.forEach(c => videos[c.mimeType] = c.mimeType)
     setCapa([...Object.keys(audios), ...Object.keys(videos)])
   }
-  async function getParameters(){
-    try{
-      if(!PC) return 
-      const videoSender = await PC.getSenders().find(RTCRtpsender => RTCRtpsender.track.kind === 'video')
-      const videoSenderParameters = videoSender.getParameters()
-      setParams(videoSenderParameters)
-      console.log("videoSenderParameters : ", videoSenderParameters)
-    }catch(err){
-      console.log("getParameters err : ", err)
-    }
-  }
 
   function enterRoom(e, type){
     if(type === "create") return navigate(`rtc/${rommNameRef.current.value}`, {state: rommNameRef.current.value})
@@ -226,10 +213,6 @@ export default function Home(){
       <div>
         <button onClick={checkCapa}>Check Local System Receive Capabilities</button>
         <div>{capa?.map((c, i) => <div key={`capa/${i}`}>{c}</div>)}</div>
-      </div>
-      <div>
-        <button onClick={getParameters}>Check Video Parameters</button>
-        <div>{}</div>
       </div>
       {SDP && (
         <footer>
