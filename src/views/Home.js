@@ -5,6 +5,7 @@ import axios from "../api"
 
 let mediaStream
 let PC
+let TC
 // 현재 사용가능한 input devices 리스트를 반환한다
 async function getDevices(){
   try{
@@ -38,14 +39,32 @@ async function getMediaStream(deviceId = {}){
     console.log('getMediaStream err: ', err)
   }
 }
+async function setCodecPreferences(){
+  try{
+    const tcvr = PC.getTransceivers()[1]
+    const codecs = RTCRtpReceiver.getCapabilities('video').codecs
+    const h264 = []
+    const etc = []
+    codecs.forEach(c => {
+      if(c.mimeType.includes('264')) return h264.push(c)
+      return etc.push(c)
+    })
+    const prefered = h264.concat(etc)
+    if(tcvr.setCodecPreferences) tcvr.setCodecPreferences(prefered)
+    // 102 122 127 121 125 107 108 109 124 120 39 40 123 119 96 97 98 99 100 101 45 46 114 115 116
+    // 102     127     125     108     124     39    123
+  }catch(err){
+    console.log("set codec parameters : ", err)
+  }
+}
 function checkVideoTrack(){
   console.log('video track constraints : ', [mediaStream.getVideoTracks()[0].getConstraints(), mediaStream.getVideoTracks()[0].getSettings()])
 }
+
 // 문자열 데이터 byte 사이즈 
 function getStringSize(str){
   return new Blob([str]).size
 }
-
 
 export default function Home(){
   const navigate = useNavigate()
@@ -58,6 +77,8 @@ export default function Home(){
   const [rooms, setRooms] = useState([])
   const [rotate, setRotate] = useState(false)
   const [SDP, setSDP] = useState()
+  const [capa, setCapa] = useState()
+  const [params, setParams] = useState()
 
   const getMedia = useCallback(async function (deviceId = {}){
     console.log("getMedia : ", deviceId.V, deviceId.A)
@@ -100,6 +121,7 @@ export default function Home(){
     Promise.resolve(true)
     .then(() => getMedia())
     .then(() => connect())
+    .then(() => setCodecPreferences())
     .then(() => PC.createOffer().then(setSDP))
     return () => stop()
   }, [getMedia, connect, stop])
@@ -147,6 +169,26 @@ export default function Home(){
       setAudios(res.audios)
     })
   }
+  function checkCapa(){
+    const audios = {}
+    const videos = {}
+    const audioCodecs = RTCRtpReceiver.getCapabilities('audio').codecs
+    const videoCodecs = RTCRtpReceiver.getCapabilities('video').codecs
+    audioCodecs.forEach(c => audios[c.mimeType] = c.mimeType)
+    videoCodecs.forEach(c => videos[c.mimeType] = c.mimeType)
+    setCapa([...Object.keys(audios), ...Object.keys(videos)])
+  }
+  async function getParameters(){
+    try{
+      if(!PC) return 
+      const videoSender = await PC.getSenders().find(RTCRtpsender => RTCRtpsender.track.kind === 'video')
+      const videoSenderParameters = videoSender.getParameters()
+      setParams(videoSenderParameters)
+      console.log("videoSenderParameters : ", videoSenderParameters)
+    }catch(err){
+      console.log("getParameters err : ", err)
+    }
+  }
 
   function enterRoom(e, type){
     if(type === "create") return navigate(`rtc/${rommNameRef.current.value}`, {state: rommNameRef.current.value})
@@ -181,6 +223,14 @@ export default function Home(){
       <section>
         <button onClick={checkVideoTrack}>Check Constraints/Settings</button>
       </section>
+      <div>
+        <button onClick={checkCapa}>Check Local System Receive Capabilities</button>
+        <div>{capa?.map((c, i) => <div key={`capa/${i}`}>{c}</div>)}</div>
+      </div>
+      <div>
+        <button onClick={getParameters}>Check Video Parameters</button>
+        <div>{}</div>
+      </div>
       {SDP && (
         <footer>
           <h3>{SDP.type}: {getStringSize(JSON.stringify(SDP))}Bytes</h3>

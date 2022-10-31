@@ -10,7 +10,7 @@ html{
 body{
   flex: 1;
 }
-div#root{
+#root{
   height: 100%;
 }
 ul, li{

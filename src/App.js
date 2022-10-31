@@ -7,6 +7,7 @@ import createSocket from './socket'
 import RTC from './views/RTC'
 import Broadcast from './views/Broadcast'
 import Test from './views/Test'
+import Map from './views/Map'
 import Datas from './views/Datas'
 export const ws = createSocket()
 
@@ -16,9 +17,10 @@ function Router(){
       <Route path="/" element={<Layout />}>
         <Route index element={<Home />} />
         <Route path="rtc/:name" element={<RTC />} />
+        <Route path="map" element={<Map />} />
+        <Route path="datas" element={<Datas />} />
         <Route path="broadcast" element={<Broadcast />} />
         <Route path="test" element={<Test />} />
-        <Route path="datas" element={<Datas />} />
       </Route>
     </Routes>
   )

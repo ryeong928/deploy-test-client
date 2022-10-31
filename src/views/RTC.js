@@ -34,7 +34,6 @@ many corporate/enterprise firewall only allow port 80 or 443,
 it also supports turns + SSL for maximum compatibility.
 */
 
-
 async function getDevices(){
   try{
     const videos = []
@@ -79,18 +78,64 @@ function updateTrack(type){
     audioSender.replaceTrack(audioTrack)
   }
 }
+async function checkCapabilities(){
+  try{
+    if(!PC) return
+    const videoSender = await PC.getSenders().find(RTCRtpsender => RTCRtpsender.track.kind === 'video')
+    const videoSenderParameters = videoSender.getParameters()
+    const videoSendercodecsH264 = videoSenderParameters.codecs.filter(c => c.mimeType.includes('H264'))
+    console.log('check capabilities: ', [videoSenderParameters.codecs, videoSendercodecsH264])
+  }catch(err){
+    console.log("check capabilities error : ", err)
+  }
+}
+async function setCodecPreferences(){
+  // create sdp 이전에 실행되어야 하며, 적용되면 해당 sdp만 생성한다
+  try{
+    // video
+    const videoTransceiver = PC.getTransceivers().find(t => t.sender.track.kind === 'video')
+    const h264 = []
+    const etc1 = []
+    RTCRtpReceiver.getCapabilities('video').codecs.forEach(c => {
+      if(c.mimeType.includes('264')) return h264.push(c)
+      return etc1.push(c)
+    })
+    if(videoTransceiver.setCodecPreferences) videoTransceiver.setCodecPreferences(h264.concat(etc1))
+    // audio
+    const audioTransceiver = PC.getTransceivers().find(t => t.sender.track.kind === 'audio')
+    const pcma = []
+    const etc2 = []
+    RTCRtpReceiver.getCapabilities('audio').codecs.forEach(c => {
+      if(c.mimeType.includes('PCMA')) return pcma.push(c)
+      return etc2.push(c)
+    })
+    console.log('pcma : ', pcma)
+    if(audioTransceiver.setCodecPreferences) audioTransceiver.setCodecPreferences(pcma.concat(etc2))
+    
+  }catch(err){
+    console.log("set codec parameters : ", err)
+  }
+}
 async function checkStats(){
   try{
     if(!PC) return
+    checkCapabilities()
     const start = await PC.getStats()
     await new Promise(res => setTimeout(res, 3000))
     const end = await PC.getStats()
+    let audioMimeType
+    let videoMimeType
     let bytesSent = 0
     let bytesReceived = 0
     let packetsSent = 0
     let packetsReceived = 0
 
     for(const stats of end.values()){
+      if(stats.type === "codec"){
+        const mimeType = stats.mimeType
+        if(mimeType.includes("audio")) audioMimeType = mimeType
+        if(mimeType.includes("video")) videoMimeType = mimeType
+      }
       if(stats.type === 'outbound-rtp'){
         const base = start.get(stats.id)
         if(!base) continue
@@ -104,7 +149,7 @@ async function checkStats(){
         packetsReceived += stats.packetsReceived - base.packetsReceived
       }
     }
-    return {bytesSent, packetsSent, bytesReceived, packetsReceived}
+    return {audioMimeType, videoMimeType, bytesSent, bytesReceived}
   }catch(err){
     console.log("check stats error : ", err)
   }
@@ -143,8 +188,8 @@ export default function RTC(){
   const [isOffer, setIsOffer] = useState(false)
   const [ANSWER, setANSWER] = useState()
   const [isAnswer, setIsAnswer] = useState(false)
-  // network outbound-rtp amount
-  const [DataAmount, setDataAmount] = useState(undefined)
+  // network inbound/outbound-rtp amount
+  const [stats, setStats] = useState(undefined)
   // rotate video view
   const [rotateLocal, setRotateLocal] = useState(false)
   const [rotateRemote, setRotateRemote] = useState(false)
@@ -193,7 +238,6 @@ export default function RTC(){
       if(type === "join"){
         console.log('the other joined')
         PC.createOffer().then(offer => {
-          setOFFER(prev => offer)
           PC.setLocalDescription(offer)
           console.log('send offer')
           send({type: "offer", data: offer})
@@ -237,6 +281,7 @@ export default function RTC(){
     Promise.resolve(true)
     .then(() => getMedia())
     .then(() => connect())
+    .then(() => setCodecPreferences())
     .then(() => send({type: 'join', data: name}))
     .catch(console.log)
 
@@ -248,12 +293,12 @@ export default function RTC(){
     }
   }, [name, props, getMedia, navigate, connect])
 
-  const checkDataAmout = useCallback(() => {
+  const onCheckStats = useCallback(() => {
     if(timer) clearInterval(timer)
     else {
       async function getData(){
         const data = await checkStats()
-        setDataAmount(data)
+        setStats(data)
       }
       getData()
       timer = setInterval(getData, 3000)
@@ -365,8 +410,10 @@ export default function RTC(){
 
       <section>
         <button onClick={checkVideoTrack}>check Video Track</button>
-        <button onClick={checkDataAmout}>check sent data amount</button>
-        {DataAmount && Object.keys(DataAmount).map(v => <div key={v}>{v}: {DataAmount[v]}</div>)}
+        <button onClick={onCheckStats}>Check Stats</button>
+        <div>
+          {stats && Object.keys(stats).map(v => <div key={v}>{v}: {stats[v]}</div>)}
+        </div>
       </section>
 
       <section>
@@ -429,8 +476,16 @@ export default function RTC(){
   ★★★ RTCPeerConnection
     .getStats() : 온갖 stats에 대한 정보를 RTCStatsReport Map으로 반환한다
     .getSenders() : 연결된 MediaStreamTrack에 해당하는 RTCRtpSender 객체들로 이루어진 배열을 반환한다
+    .getTransceivers() : RTCRtpTransceiver 객체 배열을 반환한다
 
 
+  ★★★  RTCRtpTransceiver : an object being used to send and receive data on the connection. describes a permanent pairing of an RTCRtpSender and an RTCRtpReceiver, along with some shared state.
+    .setCodecPreferences() : codec capabilities 필터링 적용하여, sdp 생성시 담아줄 codec 제한
+    .stop()
+
+  ★★★  RTCRtpReceiver : manages the reception and decoding of data for a MediaStreamTrack on an RTCPeerConnection
+
+  
   ★★★ RTCRtpSender : 상대방에게 전달되는 특정 MediaStreamTrack 어떻게 encoded 되고 sent 되는지에 대한 정보를 갖고 있으며, 이에 대한 제어권을 제공하는 객체
     .replaceTrack() : renegotiation 없이, 현재 RTCRtpSender에 의해 전달되고 있는 track을 다른 track으로 교체한다
     .getStats() : 해당 RTCRtpSender에 의해 외부로 스트리밍되는 정보에 관한 모든 statistics data를 갖는 RTCStatsReport를 value로 가진 Promise를 반환한다

@@ -1,116 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import styled from 'styled-components'
-
-const SelectRoundSVG = styled.svg`
-  & > g{
-    pointerEvents: none;
-    stroke: silver;
-  }
-  &:hover > g{
-    stroke: dimgray;
-  }
-  &.select-round-svg-active > g{
-    stroke: red;
-  }
-`
-function SelectButton({color}){
-  return (
-    <SelectRoundSVG className={color ? "select-round-svg-active" : ""} width="20" height="20" viewBox="0 0 20 20">
-      <g>
-        <circle cx="10" cy="10" r="8.8" strokeWidth="1.2" fill="transparent" />
-        <polyline points="5,9 8.6,13 14.4,7 " strokeWidth="2" fill="transparent" strokeLinecap='round' strokeLinejoin='round'/>
-      </g>
-    </SelectRoundSVG>
-  )
-}
-const DataTableContainer = styled.div`
-  width: 100%;
-  & > header{
-
-  }
-  & > table{
-    width: 100%;
-    border-collapse: collapse;
-    cursor: pointer;
-    text-align: center;
-    white-space: nowrap;
-    & tr{
-      align: center;
-    }
-    & td{
-      padding: 5px 10px;
-    }
-    & > thead{
-      background-color: navy;
-      color: white;
-      & > tr{
-        & > td{
-          padding: 10px;
-          &:hover{
-            background-color: royalblue;
-          }
-        }
-        & > td.table-options-selecting{
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          gap: 10px;
-          & > div{
-            font-size: 14px;
-          }
-        }
-      }
-    }
-    & > tbody{
-      background-color: #eef0f6;
-      & > tr{
-        &:hover{
-          background-color: white;
-        }
-        & > td.table-options-selecting{
-          min-width: 100px;
-          width: 10%;
-        }
-      }
-    }
-  }
-  & > footer{
-    background-color: #eef0f6;
-    height: 80px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    font-size: 18px;
-    & button{
-      width: 26px;
-      height: 26px;
-      outline: none;
-      border: 1px solid gray;
-      cursor: pointer;
-      background-color: transparent;
-      &:hover{
-        background-color: #333;
-        color: white;
-      }
-      &:active{
-        background-color: white;
-        color: black;
-      }
-    }
-    & > main{
-      display: flex;
-      justify-content: center;
-      & > button{
-        border: none;
-        &.table-options-paginationing-active{
-          background-color: #777;
-          color: white;
-        }
-      }
-    }
-  }
-`
+import {DataTableContainer, SelectButton, PageIndexChangeButton} from './components'
 
 export default function DataTable({data, options}){
   // 초기 데이터
@@ -192,13 +81,13 @@ export default function DataTable({data, options}){
     const currentPageIndex = Math.ceil(currentPage / options.paginationing)
     const lastPageIndex = Math.ceil(lastPage / options.paginationing)
     if(!type) return
-    else if(type === 'prev') return currentPageIndex === 1 ? (currentPage === 1 ? null : setCurrentPage(currentPage - 1)) : setCurrentPage(currentPage - 10)
-    else if(type === 'next') return currentPageIndex >= lastPageIndex ? (currentPage === lastPage ? null : setCurrentPage(currentPage + 1)) : setCurrentPage(prev => prev + 10 >= lastPage ? lastPage : prev + 10)
+    else if(type === '-1') return currentPageIndex === 1 ? (currentPage === 1 ? null : setCurrentPage(currentPage - 1)) : setCurrentPage(currentPage - 10)
+    else if(type === '+1') return currentPageIndex >= lastPageIndex ? (currentPage === lastPage ? null : setCurrentPage(currentPage + 1)) : setCurrentPage(prev => prev + 10 >= lastPage ? lastPage : prev + 10)
     else setCurrentPage(Number(type))
   }
   return (
     <DataTableContainer>
-      {!DATA ? <div>데이터가 없습니다</div> : (<>
+      {!DATA ? <h1>데이터가 없습니다</h1> : (<>
         {options.searching && HEADER.current && (
           <header>
             <select onChange={changeSearchingFinding} defaultValue={HEADER.current[0]}>
@@ -222,7 +111,7 @@ export default function DataTable({data, options}){
               </tr>
             </thead>
             <tbody onClick={onClickItem}>
-              {paginationing(DATA, options.paginationing, currentPage).map(d => (
+              {slicing(DATA, options.paginationing, currentPage).map(d => (
                 <tr key={`tr${d.num}`} data-id={d.num}>
                   {options.selecting && <td className="table-options-selecting"><SelectButton color={selected.some(i => i.num === d.num)}/></td>}
                   {HEADER.current.map((v, i) => <td key={`td${d.num}${i}`}>{d[v]}</td>)}
@@ -231,14 +120,14 @@ export default function DataTable({data, options}){
             </tbody>
           </table>
         )}
-        {options.paginationing && (
+        {options.paginationing && DATA.length !== 0 && (
           <footer onClick={changePage}>
-            <button data-type='prev'>{`<`}</button>
+            <PageIndexChangeButton data-type='-1' variation={-1} />
             <main>{Array.from({length: getPageCount(DATA, options.paginationing, currentPage, 10)}).map((v, i) => {
               const value = (i + 1) + (Math.ceil(currentPage / 10) - 1) * 10
               return <button key={`page/${i + 1}`} className={value === currentPage ? "table-options-paginationing-active" : ""} data-type={value}>{value}</button>
             })}</main>
-            <button data-type='next'>{`>`}</button>
+            <PageIndexChangeButton data-type='+1' variation={1} />
           </footer>
         )}
       </>)}
@@ -267,8 +156,7 @@ function sorting (array, sort) {
   })
 }
 function searching(array, finding, value){
-  if(!value) return array
-  else return array.filter(d => String(d[finding]).toUpperCase().includes(value.toUpperCase()))
+  return !value ? array : array.filter(d => String(d[finding]).toUpperCase().includes(value.toUpperCase()))
 }
 function selecting (array, item, finding) {
   const index = array.findIndex(i => i[finding] === item[finding])
@@ -277,13 +165,14 @@ function selecting (array, item, finding) {
   else temp.splice(index, 1)
   return temp
 }
-function paginationing(array, count, page = 1){
+function slicing(array, count, page = 1){
   if(!count) return array
   const start = (Number(page) - 1) * Number(count)
   const end = start + Number(count)
   return array.slice(start, end)
 }
 function getPageCount(array, count, currentPage, pageCount){
+  if(!array.length) return 0
   const lastPage = Math.ceil(array.length / count)
   const lastPageIndex = Math.ceil(lastPage / pageCount)
   const currentPageIndex = Math.ceil(currentPage / pageCount)

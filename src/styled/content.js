@@ -7,6 +7,8 @@ justify-content: center;
 align-items: center;
 gap: 20px;
 padding: 20px;
+flex: 1;
+background-color: gainsboro;
 & > header{
   font-size: 30px;
   font-weight: bold;
@@ -94,15 +96,16 @@ const Broadcast = styled(Content)`
     }
   }
 `
-const Datas = styled(Content)`
-  flex: 1;
-  background-color: gainsboro;
+const Datas = styled(Content)``
+const GoogleMap = styled(Content)`
+  min-height: 100vh;
 `
 
 const StyledContent = {
   Home,
   RTC,
   Broadcast,
-  Datas
+  Datas,
+  GoogleMap,
 }
 export default StyledContent
