@@ -168,26 +168,7 @@ function send(msg){
 function getStringSize(str){
   return new Blob([str]).size
 }
-function updateBandwidthRestriction(sdp, bandwidth) {
-  let modifier = 'AS';
-  if(browserName === "Firefox") {
-    bandwidth = (bandwidth >>> 0) * 1000;
-    modifier = 'TIAS';
-  }
-  // insert b= next c=
-  if (sdp.indexOf('b=' + modifier + ':') === -1) sdp = sdp.replace(
-    /c=IN (.*)\r\n/, 
-    'c=IN $1\r\nb=' + modifier + ':' + bandwidth + '\r\n'
-  )
-  else sdp = sdp.replace(
-    new RegExp('b=' + modifier + ':.*\r\n'), 
-    'b=' + modifier + ':' + bandwidth + '\r\n'
-  )
-  return sdp;
-}
-function removeBandwidthRestriction(sdp) {
-  return sdp.replace(/b=AS:.*\r\n/, '').replace(/b=TIAS:.*\r\n/, '');
-}
+
 
 
 export default function RTC(){
@@ -527,6 +508,31 @@ export default function RTC(){
       </section>
     </StyledContent.RTC>
   )
+}
+if(false){
+  // deprecated
+  function updateBandwidthRestriction(sdp, bandwidth) {
+    let modifier = 'AS';
+    if(browserName === "Firefox") {
+      bandwidth = (bandwidth >>> 0) * 1000;
+      modifier = 'TIAS';
+    }
+    // insert b= next c=
+    if (sdp.indexOf('b=' + modifier + ':') === -1) sdp = sdp.replace(
+      /c=IN (.*)\r\n/, 
+      'c=IN $1\r\nb=' + modifier + ':' + bandwidth + '\r\n'
+    )
+    else sdp = sdp.replace(
+      new RegExp('b=' + modifier + ':.*\r\n'), 
+      'b=' + modifier + ':' + bandwidth + '\r\n'
+    )
+    return sdp;
+  }
+  function removeBandwidthRestriction(sdp) {
+    return sdp.replace(/b=AS:.*\r\n/, '').replace(/b=TIAS:.*\r\n/, '');
+  }
+  updateBandwidthRestriction()
+  removeBandwidthRestriction()
 }
 
 /*

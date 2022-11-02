@@ -19,6 +19,7 @@ export default function Map(){
     setMap(map)
   }
   const onUnmount = (map) => {
+    if(false) console.log(map)
     setMap(null)
   }
   const onClick = (e) => {

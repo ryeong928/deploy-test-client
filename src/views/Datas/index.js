@@ -73,7 +73,7 @@ export default function Datas(){
 
   }, [filteringCriterion])
   function onSetFilteringCriterion(e){
-
+    if(false) setFilteringCriterion()
   }
   function selectNation(e){
     setNation(e.target.value)
