@@ -113,6 +113,7 @@ const Datas = styled(Content)`
     }
   }
   & > main{
+    width: 100%;
     flex: 1;
   }
 `
