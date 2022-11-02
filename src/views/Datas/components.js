@@ -15,9 +15,6 @@ export const DataTableContainer = styled.div`
     cursor: pointer;
     text-align: center;
     white-space: nowrap;
-    & tr{
-      align: center;
-    }
     & td{
       padding: 5px 10px;
     }
@@ -123,7 +120,7 @@ const PageIndexChangeButtonContainer = styled.svg`
   transform-origin: 50% 50%;
   transform: ${props => props.variation > 0 ? `rotate(180deg)` : `rotate(0)`};
   & > g{
-    pointerEvents: none;
+    pointer-events: none;
     stroke: #333;
   }
   &:hover{
@@ -141,7 +138,7 @@ const PageIndexChangeButtonContainer = styled.svg`
 `
 export function PageIndexChangeButton({variation}){
   return(
-    <PageIndexChangeButtonContainer width="26" height="26" viewBox="0 0 20 20" variation={variation}>
+    <PageIndexChangeButtonContainer width="26" height="26" viewBox="0 0 20 20" variation={variation} data-type={variation}>
       <g>
         {Math.abs(variation) === 1 ? (
           <polyline points="13,5 7,10 13,15" strokeWidth="1" fill="transparent"/>
@@ -151,5 +148,20 @@ export function PageIndexChangeButton({variation}){
       </>)}
       </g>
     </PageIndexChangeButtonContainer>
+  )
+}
+
+const SortOrderIconContainer = styled.svg`
+  pointer-events: none;
+  transform-origin: 50% 50%;
+  transform: ${props => props.order === 'asc' ? `rotate(0)` : `rotate(180deg)`};
+  margin-left: 5px;
+`
+
+export function SortOrderIcon({order}){
+  return(
+    <SortOrderIconContainer width="10" height="10" viewBox="0 0 10 10" order={order}>
+      <polygon points="5,0 0,9 10,9" fill="white"/>
+    </SortOrderIconContainer>
   )
 }

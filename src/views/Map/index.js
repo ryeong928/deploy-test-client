@@ -14,7 +14,6 @@ export default function Map(){
     region: "US",
   })
   const [map, setMap] = useState(null)
-  console.log(map)
   // 맵 loaded, unmounted, onClick
   const onLoad = (map) => {
     setMap(map)

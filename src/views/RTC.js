@@ -2,10 +2,13 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import StyledContent from "../styled/content";
 import { ws } from '../App'
+import  { browserName } from 'react-device-detect'
 
 let mediaStream
 let PC
 let timer
+const supportsSetCodecPreferences = window.RTCRtpTransceiver && 'setCodecPreferences' in window.RTCRtpTransceiver.prototype;
+
 const iceServers = [
   {
     urls: "stun:openrelay.metered.ca:80",
@@ -54,8 +57,8 @@ async function getMediaStream(deviceId = {}){
     const constraints = {
       video: {
         facingMode: "user",
-        width: {exact: 160},
-        height: {exact: 120}
+        width: {exact: 640 * 2},
+        height: {exact: 480 * 2},
       }, 
       audio: A ? {deviceId: {exact: A}} : true
     }
@@ -98,7 +101,8 @@ async function setCodecPreferences(){
     const etc1 = []
     RTCRtpReceiver.getCapabilities('video').codecs.forEach(c => {
       if(c.mimeType.includes('264')) return h264.push(c)
-      return etc1.push(c)
+      else if (c.mimeType.toUpperCase().includes('VP')) return etc1.push(c)
+      return
     })
     if(videoTransceiver.setCodecPreferences) videoTransceiver.setCodecPreferences(h264.concat(etc1))
     // audio
@@ -109,7 +113,6 @@ async function setCodecPreferences(){
       if(c.mimeType.includes('PCMA')) return pcma.push(c)
       return etc2.push(c)
     })
-    console.log('pcma : ', pcma)
     if(audioTransceiver.setCodecPreferences) audioTransceiver.setCodecPreferences(pcma.concat(etc2))
     
   }catch(err){
@@ -120,8 +123,9 @@ async function checkStats(){
   try{
     if(!PC) return
     checkCapabilities()
+    //
     const start = await PC.getStats()
-    await new Promise(res => setTimeout(res, 3000))
+    await new Promise(res => setTimeout(res, 1000))
     const end = await PC.getStats()
     let audioMimeType
     let videoMimeType
@@ -149,15 +153,14 @@ async function checkStats(){
         packetsReceived += stats.packetsReceived - base.packetsReceived
       }
     }
-    if(false) console.log(packetsSent, packetsReceived)
+    if(false && supportsSetCodecPreferences) console.log(packetsSent, packetsReceived)
     return {audioMimeType, videoMimeType, bytesSent, bytesReceived}
   }catch(err){
     console.log("check stats error : ", err)
   }
 }
 function checkVideoTrack(){
-  console.log('constraints: ', mediaStream.getVideoTracks()[0].getConstraints())
-  console.log('settings: ', mediaStream.getVideoTracks()[0].getSettings())
+  return {...mediaStream.getVideoTracks()[0].getSettings()}
 }
 function send(msg){
   ws.send(JSON.stringify(msg))
@@ -165,7 +168,26 @@ function send(msg){
 function getStringSize(str){
   return new Blob([str]).size
 }
-
+function updateBandwidthRestriction(sdp, bandwidth) {
+  let modifier = 'AS';
+  if(browserName === "Firefox") {
+    bandwidth = (bandwidth >>> 0) * 1000;
+    modifier = 'TIAS';
+  }
+  // insert b= next c=
+  if (sdp.indexOf('b=' + modifier + ':') === -1) sdp = sdp.replace(
+    /c=IN (.*)\r\n/, 
+    'c=IN $1\r\nb=' + modifier + ':' + bandwidth + '\r\n'
+  )
+  else sdp = sdp.replace(
+    new RegExp('b=' + modifier + ':.*\r\n'), 
+    'b=' + modifier + ':' + bandwidth + '\r\n'
+  )
+  return sdp;
+}
+function removeBandwidthRestriction(sdp) {
+  return sdp.replace(/b=AS:.*\r\n/, '').replace(/b=TIAS:.*\r\n/, '');
+}
 
 
 export default function RTC(){
@@ -189,6 +211,9 @@ export default function RTC(){
   const [isOffer, setIsOffer] = useState(false)
   const [ANSWER, setANSWER] = useState()
   const [isAnswer, setIsAnswer] = useState(false)
+  // settings, encodings
+  const [settings, setSettings] = useState()
+  const [encodings, setEncodings] = useState()
   // network inbound/outbound-rtp amount
   const [stats, setStats] = useState(undefined)
   // rotate video view
@@ -302,10 +327,10 @@ export default function RTC(){
         setStats(data)
       }
       getData()
-      timer = setInterval(getData, 3000)
+      timer = setInterval(getData, 1000)
     } 
   }, []) 
-  async function changeResolution(){
+  async function changeResolutionDeprecated(){
     try{
       if(!mediaStream) return window.alert("연결된 장치가 없습니다")
       mediaStream.getTracks().forEach(t => t.stop())
@@ -323,6 +348,24 @@ export default function RTC(){
       updateTrack('video')
     }catch(err){
       console.log('changeResolution error: ', err)
+    }
+  }
+  async function changeFrameRateDeprecated(){
+    try{
+      if(!mediaStream) return window.alert("연결된 장치가 없습니다")
+      mediaStream.getTracks().forEach(t => t.stop())
+
+      const VC = mediaStream.getVideoTracks()[0].getConstraints()
+      VC.frameRate = VC.frameRate === 10 ? 30 : 10
+      const constraints = {
+        video: VC,
+        audio: true
+      }
+      mediaStream = await window.navigator.mediaDevices.getUserMedia(constraints)
+      localRef.current.srcObject = mediaStream
+      updateTrack('video')
+    }catch(err){
+      console.log('changeFrameRate error: ', err)
     }
   }
   async function changeChannel(){
@@ -356,6 +399,35 @@ export default function RTC(){
     await getMedia({A: e.target.value})
     updateTrack('audio')
   }
+  function changeFrameRate(){
+    const senders = PC.getSenders()
+    console.log('senders : ', senders)
+    //
+    const sender = PC.getSenders().find(s => s.track.kind === 'video')
+    const params = sender.getParameters()
+    if(!params.encodings) params.encodings = [{}]
+    params.encodings[0].maxFramerate = params.encodings[0].maxFramerate === 5 ? 30 : 5
+    sender.setParameters(params)
+    .catch(err => console.log("changeFrameRate error: ", err))
+  }
+  function changeResolution(){
+    const sender = PC.getSenders().find(s => s.track.kind === 'video')
+    const params = sender.getParameters()
+    if(!params.encodings) params.encodings = [{}]
+    params.encodings[0].scaleResolutionDownBy = params.encodings[0].scaleResolutionDownBy !== 4 ? 4 : 1
+    sender.setParameters(params)
+    .catch(err => console.log("changeResolution error: ", err))
+  }
+  function changeMaxBitrate(e){
+    const bandWidth = e.target.value
+    const sender = PC.getSenders().find(s => s.track.kind === 'video')
+    const params = sender.getParameters()
+    if(!params.encodings) params.encodings = [{}]
+    if(bandWidth === 'unlimited') delete params.encodings[0].maxBitrate
+    else params.encodings[0].maxBitrate = bandWidth
+    sender.setParameters(params)
+    .catch(err => console.log("changeMaxBitrate error: ", err))
+  }
   function onoffVideo(){
     if(!mediaStream) return window.alert("연결된 장치가 없습니다")
     mediaStream.getVideoTracks().forEach(track => track.enabled = !track.enabled)
@@ -377,7 +449,14 @@ export default function RTC(){
     if(type === "local") setRotateLocal(prev => !prev)
     if(type === "remote") setRotateRemote(prev => !prev)
   }
-
+  function checkEncodings(){
+    const sender = PC.getSenders().find(s => s.track.kind === 'video')
+    setEncodings({...sender.getParameters().encodings[0]})
+  }
+  if(false){
+    changeResolutionDeprecated()
+    changeFrameRateDeprecated()
+  }
   return(
     <StyledContent.RTC>
       <header>v0.3 RTC room {name}</header>
@@ -393,10 +472,14 @@ export default function RTC(){
         <select onChange={changeAudio}>
           {audios.map(a => (<option key={a.deviceId} value={a.deviceId} selected={a.label === crtAudio.label}>{a.label}</option>))}
         </select>
+        <select onChange={changeMaxBitrate} defaultValue={'unlimited'}>
+          {['unlimited', 2000, 1000, 500, 125, 75].map(b => (<option key={b} value={b}>{b}</option>))}
+        </select>
       </section>
 
       <section>
         <button onClick={changeResolution}>Change Resolution</button>
+        <button onClick={changeFrameRate}>Change FrameRate</button>
         <button onClick={changeChannel}>Change Channel</button>
         <button onClick={onoffVideo}>Camera {isVideoOn ? "On" : "Off"}</button>
         <button onClick={onoffAudio}>Audio {isAudioOn ? "On" : "Off"}</button>
@@ -410,7 +493,20 @@ export default function RTC(){
       </section>
 
       <section>
-        <button onClick={checkVideoTrack}>check Video Track</button>
+        <button onClick={() => setSettings(checkVideoTrack())}>check Video Setting</button>
+        <div>
+          {settings && Object.keys(settings).map(v => <div key={`setting/${v}`}>{v}: {settings[v]}</div>)}
+        </div>
+      </section>
+
+      <section>
+        <button onClick={checkEncodings}>cheek Video Encodings</button>
+        <div>
+          {encodings && Object.keys(encodings).map(v => <div key={`encodings/${v}`}>{v}: {encodings[v]}</div>)}
+        </div>
+      </section>
+
+      <section>
         <button onClick={onCheckStats}>Check Stats</button>
         <div>
           {stats && Object.keys(stats).map(v => <div key={v}>{v}: {stats[v]}</div>)}
@@ -507,6 +603,8 @@ export default function RTC(){
     o : SDP를 생성한 Peer의 식별자. username, sessionId, sessionVersion, networkType, addressType, unicastAddress
     s : session name
     t : 세션 활성화 시간. start time, end time
+    c=IN : 실시간 트래픽을 보내고 받을 IP를 제공한다
+    b=AS:32 : 전송 가능한 최대 bandwidth가 32kb/s (firefox는 TIAS)
     m : 미디어 라인. 각 장치 스트림에 관한 속성들에 대한 정보를 가지고 있다
     a=rtpmap:프로파일번호 코덱종류/샘플링주기/채널수
 

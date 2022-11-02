@@ -27,8 +27,6 @@ async function getMediaStream(deviceId = {}){
     const constraints = {
       video: {
         facingMode: "user",
-        width: {exact: 160},
-        height: {exact: 120}
       }, 
       audio: A ? {deviceId: {exact: A}} : true
     }
@@ -77,7 +75,6 @@ export default function Home(){
   const [rotate, setRotate] = useState(false)
   const [SDP, setSDP] = useState()
   const [capa, setCapa] = useState()
-
   const getMedia = useCallback(async function (deviceId = {}){
     console.log("getMedia : ", deviceId.V, deviceId.A)
     try{
@@ -150,6 +147,23 @@ export default function Home(){
       setAudios(res.audios)
     })
   }
+  async function changeFrameRate(){
+    try{
+      if(!mediaStream) return window.alert("연결된 장치가 없습니다")
+      mediaStream.getTracks().forEach(t => t.stop())
+
+      const VC = mediaStream.getVideoTracks()[0].getConstraints()
+      VC.frameRate = VC.frameRate === 10 ? 30 : 10
+      const constraints = {
+        video: VC,
+        audio: true
+      }
+      mediaStream = await window.navigator.mediaDevices.getUserMedia(constraints)
+      localRef.current.srcObject = mediaStream
+    }catch(err){
+      console.log('changeFrameRate error: ', err)
+    }
+  }
   async function changeChannel(){
     mediaStream?.getTracks().forEach(t => t.stop())
 
@@ -204,6 +218,7 @@ export default function Home(){
       </section>
       <section>
         <button onClick={changeResolution}>Change Resolution</button>
+        <button onClick={changeFrameRate}>Change FrameRate</button>
         <button onClick={changeChannel}>Change Channel</button>
         <button onClick={() => setRotate(prev => !prev)}>Rotate View</button>
       </section>

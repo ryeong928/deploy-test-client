@@ -40,7 +40,6 @@ export default function Layout() {
       <header>
         <section>
           <Link to="/">Home</Link>
-          <Link to="/map">GoogleMap</Link>
           <Link to="/datas">Datas</Link>
         </section>
         <section />

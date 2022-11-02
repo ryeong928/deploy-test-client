@@ -96,9 +96,31 @@ const Broadcast = styled(Content)`
     }
   }
 `
-const Datas = styled(Content)``
+const Datas = styled(Content)`
+  & > header{
+    display: flex;
+    flex-direction: column;
+    & > div:nth-of-type(1){
+      display: flex;
+      gap: 10px;
+      font-size: 20px;
+      border: none;
+      & > div{
+        padding: 10px;
+        background-color: white;
+        border-radius: 5px;
+      }
+    }
+  }
+  & > main{
+    flex: 1;
+  }
+`
 const GoogleMap = styled(Content)`
-  min-height: 100vh;
+  width: 100%;
+  height: calc(100% - 50px);
+  background-color: red;
+  padding: 0;
 `
 
 const StyledContent = {

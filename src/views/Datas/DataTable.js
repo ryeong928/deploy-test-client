@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import {DataTableContainer, SelectButton, PageIndexChangeButton} from './components'
+import {DataTableContainer, SelectButton, PageIndexChangeButton, SortOrderIcon} from './components'
 
 export default function DataTable({data, options}){
   // 초기 데이터
@@ -48,8 +48,8 @@ export default function DataTable({data, options}){
     let id = e.target?.dataset?.id
     if(!id) id = e.target.closest("tr")?.dataset?.id
     if(!id) return
-    const item = DATA.find(d => d.num === Number(id))
-    options.selecting && setSelected(prev => selecting(prev, item, 'num'))
+    const item = DATA.find(d => d[options.sorting] === Number(id))
+    options.selecting && setSelected(prev => selecting(prev, item, options.sorting))
   }
   // options.selecting
   function selectAll(){
@@ -82,7 +82,7 @@ export default function DataTable({data, options}){
     const lastPageIndex = Math.ceil(lastPage / options.paginationing)
     if(!type) return
     else if(type === '-1') return currentPageIndex === 1 ? (currentPage === 1 ? null : setCurrentPage(currentPage - 1)) : setCurrentPage(currentPage - 10)
-    else if(type === '+1') return currentPageIndex >= lastPageIndex ? (currentPage === lastPage ? null : setCurrentPage(currentPage + 1)) : setCurrentPage(prev => prev + 10 >= lastPage ? lastPage : prev + 10)
+    else if(type === '1') return currentPageIndex >= lastPageIndex ? (currentPage === lastPage ? null : setCurrentPage(currentPage + 1)) : setCurrentPage(prev => prev + 10 >= lastPage ? lastPage : prev + 10)
     else setCurrentPage(Number(type))
   }
   return (
@@ -107,14 +107,19 @@ export default function DataTable({data, options}){
                     <div>({selected.length}/{DATA.length})</div>
                   </td>
                 )}
-                {HEADER.current.map(v => <td key={v} onClick={onClickSort}>{v}</td>)}
+                {HEADER.current.map(v => (
+                  <td key={v} onClick={onClickSort}>
+                    <span>{v}</span>
+                    {SORT?.type === v && <SortOrderIcon order={SORT.order}/>}
+                  </td>
+                ))}
               </tr>
             </thead>
             <tbody onClick={onClickItem}>
               {slicing(DATA, options.paginationing, currentPage).map(d => (
-                <tr key={`tr${d.num}`} data-id={d.num}>
-                  {options.selecting && <td className="table-options-selecting"><SelectButton color={selected.some(i => i.num === d.num)}/></td>}
-                  {HEADER.current.map((v, i) => <td key={`td${d.num}${i}`}>{d[v]}</td>)}
+                <tr key={`tr${d[options.sorting]}`} data-id={d[options.sorting]}>
+                  {options.selecting && <td className="table-options-selecting"><SelectButton color={selected.some(i => i[options.sorting] === d[options.sorting])}/></td>}
+                  {HEADER.current.map((v, i) => <td key={`td${d[options.sorting]}${i}`}>{d[v]}</td>)}
                 </tr>
               ))}
             </tbody>
@@ -122,12 +127,14 @@ export default function DataTable({data, options}){
         )}
         {options.paginationing && DATA.length !== 0 && (
           <footer onClick={changePage}>
-            <PageIndexChangeButton data-type='-1' variation={-1} />
-            <main>{Array.from({length: getPageCount(DATA, options.paginationing, currentPage, 10)}).map((v, i) => {
-              const value = (i + 1) + (Math.ceil(currentPage / 10) - 1) * 10
-              return <button key={`page/${i + 1}`} className={value === currentPage ? "table-options-paginationing-active" : ""} data-type={value}>{value}</button>
-            })}</main>
-            <PageIndexChangeButton data-type='+1' variation={1} />
+            <PageIndexChangeButton variation={-1} />
+            <main>
+              {Array.from({length: getPageCount(DATA, options.paginationing, currentPage, 10)}).map((v, i) => {
+                const value = (i + 1) + (Math.ceil(currentPage / 10) - 1) * 10
+                return <button key={`page/${i + 1}`} className={value === currentPage ? "table-options-paginationing-active" : ""} data-type={value}>{value}</button>
+              })}
+            </main>
+            <PageIndexChangeButton variation={1} />
           </footer>
         )}
       </>)}
