@@ -75,6 +75,7 @@ export default function Home(){
   const [rotate, setRotate] = useState(false)
   const [SDP, setSDP] = useState()
   const [capa, setCapa] = useState()
+  const []
   const getMedia = useCallback(async function (deviceId = {}){
     console.log("getMedia : ", deviceId.V, deviceId.A)
     try{
@@ -98,14 +99,10 @@ export default function Home(){
     mediaStream.getTracks().forEach(t => PC.addTrack(t, mediaStream))
   }, [])
   const stop = useCallback(() => {
-    if(mediaStream){
-      mediaStream.getTracks().forEach(t => t.stop())
-      mediaStream = null
-    }
-    if(PC){
-      PC.close()
-      PC = null
-    }
+    mediaStream?.getTracks().forEach(t => t.stop())
+    mediaStream = null
+    PC?.close()
+    PC = null
   }, [])
 
   useEffect(() => {

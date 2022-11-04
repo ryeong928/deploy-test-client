@@ -47,7 +47,7 @@ export const DataTableContainer = styled.div`
         }
         & > td.table-options-selecting{
           min-width: 100px;
-          width: 10%;
+          width: 7%;
         }
       }
     }

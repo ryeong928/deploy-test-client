@@ -135,3 +135,8 @@ export default function Datas(){
     </StyledContent.Datas>
   )
 }
+/*
+  1. 전체 리스트 요청 하기전에, 필터링할 항목은? 이 항목을 재적용 하려면 서버로 재요청을 하는 식으로 할건지?
+
+  2. 정렬 기준 항목이 어떤게 있는지
+*/
