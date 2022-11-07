@@ -75,7 +75,6 @@ export default function Home(){
   const [rotate, setRotate] = useState(false)
   const [SDP, setSDP] = useState()
   const [capa, setCapa] = useState()
-  const []
   const getMedia = useCallback(async function (deviceId = {}){
     console.log("getMedia : ", deviceId.V, deviceId.A)
     try{
